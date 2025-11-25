@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Kayıt Ol | OdyoCase</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="auth-page">
+
+    <div class="auth-container">
+        <div class="card">
+            <div class="auth-header">
+                <i class="fas fa-user-graduate" style="color:var(--secondary);"></i>
+                <h2 style="margin:0; color:var(--dark);">Kayıt Ol</h2>
+                <p style="color:#666;">Aramıza katıl ve vakaları çözmeye başla</p>
+            </div>
+
+            <div class="input-wrapper">
+                <i class="fas fa-user icon-left"></i>
+                <input type="text" id="kadi" placeholder="İsim Soyisim Giriniz">
+            </div>
+
+            <div class="input-wrapper">
+                <i class="fas fa-key icon-left"></i>
+                <input type="password" id="sifre" placeholder="Güçlü Bir Şifre Belirleyin">
+            </div>
+
+            <button id="gonder-butonu" onclick="kayitOl()" style="background:var(--secondary);">Hemen Kaydol</button>
+            
+            <p id="mesaj" style="text-align:center; margin-top:15px; font-weight:600; min-height:20px;"></p>
+
+            <div class="auth-links">
+                <a href="/login.html" style="color:var(--primary); font-weight:600;">
+                    Zaten hesabın var mı? <span style="text-decoration:underline;">Giriş Yap</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function kayitOl() {
+            const kadi = document.getElementById('kadi').value;
+            const sifre = document.getElementById('sifre').value;
+            const mesaj = document.getElementById('mesaj');
+
+            if(!kadi || !sifre) {
+                mesaj.style.color = "var(--warning-color)";
+                mesaj.innerText = "Lütfen tüm alanları doldurun.";
+                return;
+            }
+
+            mesaj.innerText = "Kayıt yapılıyor...";
+            mesaj.style.color = "var(--primary)";
+            
+            try {
+                const res = await fetch('/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: kadi, password: sifre })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    mesaj.style.color = "var(--success-color)";
+                    mesaj.innerHTML = '<i class="fas fa-check"></i> Kayıt Başarılı! Yönlendiriliyorsunuz...';
+                    setTimeout(() => window.location.href = '/login.html', 1500);
+                } else {
+                    mesaj.style.color = "var(--danger-color)";
+                    mesaj.innerText = data.message;
+                }
+            } catch (error) {
+                mesaj.style.color = "var(--danger-color)";
+                mesaj.innerText = "Bağlantı hatası!";
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OdyoCase Pro</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div>
+            <div class="logo">
+                <i class="fas fa-ear-listen"></i> OdyoCase
+            </div>
+            <div class="menu-items">
+                <a href="#" onclick="listeyeDon()" class="active"><i class="fas fa-home"></i> Ana Panel</a>
+                <a href="/profil.html"><i class="fas fa-chart-line"></i> Geçmişim</a>
+                <a href="/admin.html" id="admin-btn" style="display:none; color:#f87171;"><i class="fas fa-tools"></i> Yönetim</a>
+            </div>
+        </div>
+        
+        <div class="user-profile">
+            <div class="user-avatar" id="avatar-initial">?</div>
+            <div>
+                <div style="font-weight:600; font-size:0.9rem;" id="sidebar-username">Öğrenci</div>
+                <button onclick="cikisYap()" style="color:#94a3b8; font-size:0.8rem; border:none; background:none; padding:0; cursor:pointer;">Çıkış Yap</button>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        
+        <div id="liste-ekrani">
+            
+            <div class="stats-grid">
+                <div class="stat-card stat-blue">
+                    <div class="icon-box"><i class="fas fa-star"></i></div>
+                    <div class="stat-info">
+                        <h3 id="stat-puan">0</h3>
+                        <p>Toplam Puan</p>
+                    </div>
+                </div>
+                <div class="stat-card stat-green">
+                    <div class="icon-box"><i class="fas fa-check-double"></i></div>
+                    <div class="stat-info">
+                        <h3 id="stat-vaka">0</h3>
+                        <p>Çözülen Vaka</p>
+                    </div>
+                </div>
+                <div class="stat-card stat-orange">
+                    <div class="icon-box"><i class="fas fa-trophy"></i></div>
+                    <div class="stat-info">
+                        <h3 id="stat-sira">-</h3>
+                        <p>Sıralaman</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="margin-bottom:20px;">📂 Vaka Kütüphanesi</h3>
+            <div id="vaka-listesi">
+                <p>Yükleniyor...</p>
+            </div>
+            
+            <h3 style="margin-top:40px; margin-bottom:20px;">🏆 Liderlik Tablosu</h3>
+            <div style="background:white; padding:20px; border-radius:12px; box-shadow:0 4px 6px rgba(0,0,0,0.05);">
+                <table style="width:100%; border-collapse:collapse;">
+                    <thead><tr style="text-align:left; color:#94a3b8;"><th>#</th><th>Öğrenci</th><th>Vaka</th><th>Puan</th></tr></thead>
+                    <tbody id="liderlik-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="detay-ekrani" style="display: none;">
+            <div class="split-layout">
+                
+                <div class="left-panel">
+                    <button onclick="listeyeDon()" class="btn-back-list">
+                        <i class="fas fa-arrow-left"></i> Listeye Dön
+                    </button>
+                    
+                    <h1 id="detay-baslik" style="font-size:1.8rem; margin-bottom:10px;">Başlık</h1>
+                    <span id="detay-zorluk" class="zorluk-etiketi">Zorluk</span>
+                    
+                    <div style="margin-top:20px;">
+                        <img id="detay-resim" src="" class="case-image" onclick="openLightbox(this.src)" style="display:none;">
+                    </div>
+
+                    <p id="detay-icerik" style="line-height:1.8; color:#334155; margin-top:20px;"></p>
+                </div>
+
+                <div class="right-panel">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                        <h3 style="margin:0;">📝 Raporun</h3>
+                        <div id="sayac-kutusu" style="color:#ef4444; font-weight:bold; font-family:monospace; font-size:1.2rem; display:none;">
+                            05:00
+                        </div>
+                    </div>
+                    
+                    <textarea id="rapor-alani" placeholder="Bulgularınızı buraya yazın..."></textarea>
+                    
+                    <div id="sonuc-mesaji" style="margin-top:10px; font-weight:600;"></div>
+                    
+                    <button id="gonder-butonu" style="margin-top:20px; padding:15px; background:var(--primary); color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer;">
+                        Analiz Et ve Gönder
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <div id="lightbox" class="lightbox" onclick="closeLightbox()">
+        <span class="lightbox-close">&times;</span>
+        <img id="lightbox-img" src="">
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // Lightbox Fonksiyonları
+        function openLightbox(src) {
+            document.getElementById('lightbox-img').src = src;
+            document.getElementById('lightbox').style.display = 'flex';
+        }
+        function closeLightbox() {
+            document.getElementById('lightbox').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

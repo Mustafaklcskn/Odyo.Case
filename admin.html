@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Paneli | OdyoCase</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Admin grid düzeni */
+        .admin-layout {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr; /* Form daha geniş, liste daha dar */
+            gap: 30px;
+            align-items: start;
+        }
+        @media (max-width: 1000px) { .admin-layout { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div>
+            <div class="logo"><i class="fas fa-ear-listen"></i> OdyoCase</div>
+            <div class="menu-items">
+                <a href="/"><i class="fas fa-home"></i> Ana Panel</a>
+                <a href="/profil.html"><i class="fas fa-chart-line"></i> Geçmişim</a>
+                <a href="/admin.html" class="active" style="color:#f87171;"><i class="fas fa-tools"></i> Yönetim</a>
+            </div>
+        </div>
+        <div class="user-profile">
+            <div class="user-avatar" id="avatar-initial">A</div>
+            <div>
+                <div style="font-weight:600; font-size:0.9rem;" id="sidebar-username">Admin</div>
+                <button onclick="cikisYap()" style="color:#94a3b8; font-size:0.8rem; border:none; background:none; padding:0; cursor:pointer;">Çıkış Yap</button>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        
+        <div class="admin-header">
+            <h1 style="margin:0; font-size:1.5rem; color:var(--dark);">
+                <i class="fas fa-laptop-medical" style="color:var(--primary); margin-right:10px;"></i> Vaka Yönetim Merkezi
+            </h1>
+            <a href="/" class="btn-back">
+                <i class="fas fa-arrow-left"></i> Siteye Dön
+            </a>
+        </div>
+
+        <div class="admin-layout">
+            
+            <div class="card">
+                <h2 style="margin-top:0; margin-bottom:20px; padding-bottom:15px; border-bottom:1px solid #eee; color:var(--dark);">
+                    <i class="fas fa-plus-circle" style="color:var(--secondary)"></i> Yeni Vaka Ekle
+                </h2>
+
+                <div class="row-inputs">
+                    <div class="form-group">
+                        <label>Hasta Yaşı</label>
+                        <input type="number" id="vaka-yas" class="custom-input" value="45" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Cinsiyet</label>
+                        <select id="vaka-cinsiyet" class="custom-select">
+                            <option value="Kadın" selected>Kadın</option>
+                            <option value="Erkek">Erkek</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Ana Şikayet (Öğrenci Görür)</label>
+                    <input type="text" id="vaka-sikayet" class="custom-input" placeholder="Örn: Kulakta dolgunluk ve çınlama">
+                </div>
+
+                <div class="form-group">
+                    <label style="color:var(--danger)">Gizli Tanı (Sadece Sistem Bilir)</label>
+                    <input type="text" id="vaka-tani" class="custom-input" placeholder="Örn: Meniere" style="background:#fff1f2; border-color:#fca5a5;">
+                </div>
+
+                <div class="form-group">
+                    <label>Zorluk Derecesi</label>
+                    <select id="vaka-zorluk" class="custom-select">
+                        <option value="Kolay">🟢 Kolay (x1 Puan)</option>
+                        <option value="Orta" selected>🟠 Orta (x1.25 Puan)</option>
+                        <option value="Zor">🔴 Zor (x1.5 Puan)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Odyogram / Vaka Görseli</label>
+                    <div class="file-upload-wrapper">
+                        <input type="file" id="vaka-resim" accept="image/*" onchange="dosyaSecildi(this)">
+                        <div class="custom-file-label">
+                            <i class="fas fa-cloud-upload-alt file-icon"></i>
+                            <span id="dosya-adi-text">Görsel yüklemek için tıklayın veya sürükleyin</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Hikaye / Anamnez</label>
+                    <textarea id="vaka-icerik" rows="4" class="custom-textarea" placeholder="Hastanın detaylı hikayesini buraya yazın..."></textarea>
+                </div>
+                
+                <button onclick="vakaEkle()" id="gonder-butonu" class="btn-save">
+                    <i class="fas fa-save"></i> Vakayı Sisteme Kaydet
+                </button>
+                
+                <p id="sonuc" style="margin-top: 15px; font-weight: 600; text-align:center; min-height:20px;"></p>
+            </div>
+
+
+            <div class="card" style="height: fit-content;">
+                <h2 style="margin-top:0; margin-bottom:20px; padding-bottom:15px; border-bottom:1px solid #eee; color:var(--dark);">
+                    <i class="fas fa-list-ul" style="color:var(--primary)"></i> Mevcut Vakalar
+                </h2>
+                
+                <div id="yonetim-listesi" style="max-height: 700px; overflow-y: auto; padding-right:5px;">
+                    <p style="color:#94a3b8; text-align:center;">Yükleniyor...</p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const username = localStorage.getItem('username');
+            if(username) {
+                document.getElementById('sidebar-username').innerText = username;
+                document.getElementById('avatar-initial').innerText = username.charAt(0).toUpperCase();
+            }
+            vakalariListele();
+        });
+
+        // Dosya seçilince ismi gösteren fonksiyon
+        function dosyaSecildi(input) {
+            const text = document.getElementById('dosya-adi-text');
+            if(input.files && input.files[0]) {
+                text.innerHTML = `<i class="fas fa-check" style="color:var(--success-color)"></i> ${input.files[0].name}`;
+                text.style.color = "var(--dark)";
+                text.style.fontWeight = "bold";
+            } else {
+                text.innerText = "Görsel yüklemek için tıklayın veya sürükleyin";
+            }
+        }
+
+        async function vakaEkle() {
+            const yas = document.getElementById('vaka-yas').value;
+            const cinsiyet = document.getElementById('vaka-cinsiyet').value;
+            const sikayet = document.getElementById('vaka-sikayet').value;
+            const tani = document.getElementById('vaka-tani').value;
+            const zorluk = document.getElementById('vaka-zorluk').value;
+            const icerik = document.getElementById('vaka-icerik').value;
+            const resimDosyasi = document.getElementById('vaka-resim').files[0];
+            const sonucKutusu = document.getElementById('sonuc');
+
+            if(!yas || !sikayet || !tani || !icerik) {
+                sonucKutusu.innerText = "Lütfen tüm alanları doldurun!";
+                sonucKutusu.style.color = "var(--danger)";
+                return;
+            }
+
+            sonucKutusu.innerText = "Yükleniyor...";
+            sonucKutusu.style.color = "var(--primary)";
+
+            const formData = new FormData();
+            formData.append('yas', yas);
+            formData.append('cinsiyet', cinsiyet);
+            formData.append('sikayet', sikayet);
+            formData.append('gizliTani', tani);
+            formData.append('zorluk', zorluk);
+            formData.append('icerik', icerik);
+            if (resimDosyasi) formData.append('vakaResmi', resimDosyasi);
+
+            try {
+                const response = await fetch('/admin/add-case', { method: 'POST', body: formData });
+                const data = await response.json();
+                
+                if(data.success) {
+                    sonucKutusu.innerHTML = `<i class="fas fa-check-circle"></i> ${data.message}`;
+                    sonucKutusu.style.color = "var(--success-color)";
+                    
+                    // Temizle
+                    document.getElementById('vaka-sikayet').value = "";
+                    document.getElementById('vaka-tani').value = "";
+                    document.getElementById('vaka-icerik').value = "";
+                    document.getElementById('vaka-resim').value = "";
+                    document.getElementById('dosya-adi-text').innerText = "Görsel yüklemek için tıklayın veya sürükleyin";
+                    
+                    vakalariListele(); 
+                } else {
+                    sonucKutusu.innerText = "Hata: " + data.message;
+                    sonucKutusu.style.color = "var(--danger)";
+                }
+            } catch (error) { sonucKutusu.innerText = "Bağlantı hatası!"; }
+        }
+
+        async function vakalariListele() {
+            const listeKutusu = document.getElementById('yonetim-listesi');
+            try {
+                const response = await fetch('/cases');
+                const vakalar = await response.json();
+                listeKutusu.innerHTML = "";
+
+                if (vakalar.length === 0) {
+                    listeKutusu.innerHTML = "<p style='text-align:center; color:#94a3b8; padding:20px;'>Kayıtlı vaka bulunamadı.</p>";
+                    return;
+                }
+
+                vakalar.reverse().forEach(vaka => {
+                    const baslikGosterim = vaka.yas ? `${vaka.yas} Yaş, ${vaka.cinsiyet}` : vaka.baslik;
+
+                    const satir = document.createElement('div');
+                    satir.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding:15px; border-bottom:1px solid #f1f5f9; transition:0.2s;";
+                    satir.onmouseover = function() { this.style.background = "#f8fafc"; }
+                    satir.onmouseout = function() { this.style.background = "transparent"; }
+                    
+                    satir.innerHTML = `
+                        <div>
+                            <span style="font-weight:700; color:var(--primary); margin-right:5px; background:#e0e7ff; padding:2px 6px; border-radius:4px; font-size:0.8rem;">#${vaka.vakaNo}</span>
+                            <span style="font-weight:600; color:#334155; font-size:0.95rem;">${baslikGosterim}</span>
+                            <div style="font-size:0.85rem; color:#94a3b8; margin-top:2px;">${vaka.sikayet || 'Şikayet yok'}</div>
+                        </div>
+                        <button onclick="vakaSil(${vaka.vakaNo})" class="btn-delete">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    `;
+                    listeKutusu.appendChild(satir);
+                });
+            } catch (error) { console.error(error); }
+        }
+
+        async function vakaSil(no) {
+            if (!confirm(`Vaka ${no} kalıcı olarak silinecek. Emin misiniz?`)) return;
+            try {
+                const response = await fetch('/admin/delete-case/' + no, { method: 'DELETE' });
+                const data = await response.json();
+                if (data.success) vakalariListele();
+            } catch (error) { alert("Hata oluştu."); }
+        }
+
+        function cikisYap() { localStorage.clear(); window.location.href = '/login.html'; }
+    </script>
+</body>
+</html>

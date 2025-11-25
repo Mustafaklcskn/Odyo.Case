@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Profilim | OdyoCase</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div>
+            <div class="logo"><i class="fas fa-ear-listen"></i> OdyoCase</div>
+            <div class="menu-items">
+                <a href="/"><i class="fas fa-home"></i> Ana Panel</a>
+                <a href="/profil.html" class="active"><i class="fas fa-chart-line"></i> Geçmişim</a>
+                <a href="/admin.html" id="admin-btn" style="display:none; color:#f87171;"><i class="fas fa-tools"></i> Yönetim</a>
+            </div>
+        </div>
+        <div class="user-profile">
+            <div class="user-avatar" id="avatar-initial">?</div>
+            <div>
+                <div style="font-weight:600; font-size:0.9rem;" id="sidebar-username">Öğrenci</div>
+                <button onclick="cikisYap()" style="color:#94a3b8; font-size:0.8rem; border:none; background:none; padding:0; cursor:pointer;">Çıkış Yap</button>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        
+        <h2 style="margin-bottom: 20px; color: var(--primary);">
+            <i class="fas fa-user-graduate"></i> Öğrenci Karnesi
+        </h2>
+
+        <div class="card">
+            <h3 style="margin-top:0; border-bottom:1px solid #eee; padding-bottom:15px; margin-bottom:20px;">
+                <i class="fas fa-history" style="color:var(--secondary)"></i> Rapor Geçmişim
+            </h3>
+            
+            <div style="overflow-x: auto;">
+                <table style="width:100%; border-collapse:collapse;">
+                    <thead>
+                        <tr style="background:#f8fafc; color:#64748b; font-size:0.9rem;">
+                            <th style="padding:15px; text-align:left;">Tarih</th>
+                            <th style="padding:15px; text-align:left;">Vaka</th>
+                            <th style="padding:15px; text-align:left;">Rapor Özeti</th>
+                            <th style="padding:15px; text-align:left;">AI Yorumu</th>
+                            <th style="padding:15px; text-align:right;">Puan</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablo-govdesi">
+                        <tr><td colspan="5" style="padding:20px; text-align:center;">Yükleniyor...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", async function() {
+            const token = localStorage.getItem('token');
+            const username = localStorage.getItem('username');
+            const isAdmin = localStorage.getItem('isAdmin');
+
+            if (!token) { window.location.href = '/login.html'; return; }
+
+            // Sidebar Güncelle
+            document.getElementById('sidebar-username').innerText = username;
+            document.getElementById('avatar-initial').innerText = username.charAt(0).toUpperCase();
+            if (isAdmin === "true") document.getElementById('admin-btn').style.display = "flex";
+
+            // Verileri Çek
+            try {
+                const response = await fetch('/my-reports', { headers: { 'Authorization': token } });
+                const raporlar = await response.json();
+                
+                const tablo = document.getElementById('tablo-govdesi');
+                tablo.innerHTML = "";
+
+                if (raporlar.length === 0) {
+                    tablo.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:40px; color:#94a3b8;'>Henüz hiç rapor göndermediniz.</td></tr>";
+                    return;
+                }
+
+                raporlar.forEach(rapor => {
+                    const tarih = new Date(rapor.olusturulmaTarihi).toLocaleDateString('tr-TR');
+                    
+                    // Puan Rozeti Rengi
+                    let renk = '#fee2e2; color:#991b1b'; // Kırmızı (Düşük)
+                    if (rapor.alinanPuan >= 50) renk = '#fef3c7; color:#92400e'; // Turuncu (Orta)
+                    if (rapor.alinanPuan >= 80) renk = '#dcfce7; color:#166534'; // Yeşil (Yüksek)
+
+                    const satir = `
+                        <tr style="border-bottom:1px solid #f1f5f9;">
+                            <td style="padding:15px; color:#64748b;">${tarih}</td>
+                            <td style="padding:15px; font-weight:600; color:var(--primary);">#${rapor.vakaID}</td>
+                            <td style="padding:15px; color:#334155; font-style:italic; max-width:250px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                "${rapor.raporMetni}"
+                            </td>
+                            <td style="padding:15px; font-size:0.9rem; color:#475569;">${rapor.aiYorumu || '-'}</td>
+                            <td style="padding:15px; text-align:right;">
+                                <span style="background:${renk}; padding:5px 10px; border-radius:6px; font-weight:700; font-size:0.85rem;">
+                                    ${rapor.alinanPuan}
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                    tablo.innerHTML += satir;
+                });
+            } catch (error) {
+                console.error(error);
+                document.getElementById('tablo-govdesi').innerHTML = "<tr><td colspan='5'>Hata oluştu.</td></tr>";
+            }
+        });
+
+        function cikisYap() {
+            if(confirm("Çıkış yapılsın mı?")) {
+                localStorage.clear();
+                window.location.href = '/login.html';
+            }
+        }
+    </script>
+</body>
+</html>
