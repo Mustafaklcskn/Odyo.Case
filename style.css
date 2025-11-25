@@ -279,34 +279,70 @@ button { cursor: pointer; font-family: inherit; }
 .btn-delete:hover { background: var(--danger); color: white; }
 
 /* --- 11. GİRİŞ / KAYIT SAYFALARI (AUTH) --- */
+
+/* Arkaplanı ve ortalamayı ayarla */
 body.auth-page {
     background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-    display: flex; justify-content: center; align-items: center;
+    display: flex;
+    justify-content: center; /* Yatayda ortala */
+    align-items: center;     /* Dikeyde ortala */
+    min-height: 100vh;       /* Ekran boyu kadar yer kapla */
+    margin: 0;
 }
-body.auth-page .main-content { margin: 0; padding: 20px; width: 100%; max-width: 450px; }
 
-.auth-container { width: 100%; }
+/* Kapsayıcı Kutu (İŞTE BURASI ÖNEMLİ) */
+.auth-container {
+    width: 100%;
+    max-width: 420px; /* Kutu en fazla bu kadar geniş olsun */
+    padding: 20px;
+    box-sizing: border-box; /* Padding taşma yapmasın */
+}
+
+/* Kartın Kendisi */
+.auth-container .card {
+    background: var(--white);
+    padding: 40px 30px; /* İç boşlukları artırdık */
+    border-radius: 16px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    text-align: center;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Başlıklar */
 .auth-header { text-align: center; margin-bottom: 30px; }
-.auth-header i { font-size: 3rem; color: var(--primary); margin-bottom: 15px; }
-.auth-header h2 { margin: 0; color: var(--dark); }
-.auth-header p { color: var(--muted); margin: 5px 0 0; }
+.auth-header i { font-size: 3rem; color: var(--primary); margin-bottom: 10px; display: block; }
+.auth-header h2 { margin: 0; color: var(--dark); font-size: 1.8rem; }
+.auth-header p { color: var(--muted); margin: 5px 0 0; font-size: 0.95rem; }
 
-.input-wrapper { position: relative; margin-bottom: 20px; }
+/* Input Alanları */
+.input-wrapper { position: relative; margin-bottom: 20px; text-align: left; }
+
 .input-wrapper i.icon-left {
     position: absolute; left: 15px; top: 50%; transform: translateY(-50%);
-    color: #9ca3af; font-size: 1.1rem;
+    color: #9ca3af; font-size: 1.1rem; z-index: 10;
 }
-.input-wrapper input { padding-left: 45px; }
 
+.input-wrapper input {
+    padding-left: 45px; /* İkon için yer bırak */
+    width: 100%;
+    height: 50px; /* Kutuları biraz yükselt */
+}
+
+/* Şifre Göz İkonu */
 .toggle-password {
     position: absolute; right: 15px; top: 50%; transform: translateY(-50%);
-    cursor: pointer; color: #9ca3af; padding: 5px;
+    cursor: pointer; color: #9ca3af; padding: 5px; z-index: 10;
 }
 .toggle-password:hover { color: var(--primary); }
 
-.auth-links { text-align: center; margin-top: 25px; padding-top: 20px; border-top: 1px solid #f1f5f9; }
-.auth-links a { color: var(--primary); font-weight: 600; }
-.auth-links a:hover { text-decoration: underline; }
+/* Alt Linkler */
+.auth-links { 
+    text-align: center; margin-top: 25px; padding-top: 20px; 
+    border-top: 1px solid #f1f5f9; 
+}
+.auth-links a { color: var(--primary); font-weight: 600; font-size: 0.9rem; transition: 0.2s; }
+.auth-links a:hover { color: var(--primary-hover); text-decoration: underline; }
 
 /* --- 12. YARDIMCI SINIFLAR --- */
 .text-capitalize { text-transform: capitalize; }
