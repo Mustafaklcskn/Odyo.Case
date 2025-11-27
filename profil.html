@@ -2,125 +2,176 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Profilim | OdyoCase</title>
+    <title>Öğrenci Paneli | OdyoCase</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
-    <aside class="sidebar">
-        <div>
-            <div class="logo"><i class="fas fa-ear-listen"></i> OdyoCase</div>
-            <div class="menu-items">
-                <a href="/"><i class="fas fa-home"></i> Ana Panel</a>
-                <a href="/profil.html" class="active"><i class="fas fa-chart-line"></i> Geçmişim</a>
-                <a href="/admin.html" id="admin-btn" style="display:none; color:#f87171;"><i class="fas fa-tools"></i> Yönetim</a>
-            </div>
-        </div>
-        <div class="user-profile">
-            <div class="user-avatar" id="avatar-initial">?</div>
-            <div>
-                <div style="font-weight:600; font-size:0.9rem;" id="sidebar-username">Öğrenci</div>
-                <button onclick="cikisYap()" style="color:#94a3b8; font-size:0.8rem; border:none; background:none; padding:0; cursor:pointer;">Çıkış Yap</button>
-            </div>
-        </div>
-    </aside>
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <h2><i class="fas fa-ear-listen"></i> OdyoCase</h2>
+        <a href="/" class="btn-back-list" style="margin:0; border:none; color:white;">
+            <i class="fas fa-arrow-left"></i> Ana Sayfaya Dön
+        </a>
+    </nav>
 
-    <main class="main-content">
+    <div class="container">
         
-        <h2 style="margin-bottom: 20px; color: var(--primary);">
-            <i class="fas fa-user-graduate"></i> Öğrenci Karnesi
-        </h2>
-
+        <!-- ÜST BİLGİ ALANI -->
         <div class="card">
-            <h3 style="margin-top:0; border-bottom:1px solid #eee; padding-bottom:15px; margin-bottom:20px;">
-                <i class="fas fa-history" style="color:var(--secondary)"></i> Rapor Geçmişim
-            </h3>
+            <div class="profile-header">
+                <div class="profile-avatar">
+                    <i class="fas fa-user-graduate"></i>
+                </div>
+                <div>
+                    <h1 style="margin:0; font-size:1.8rem; color:var(--text-main);">Merhaba, <span id="kullanici-adi" style="color:var(--primary);">Öğrenci</span></h1>
+                    <p style="color:var(--text-muted); margin:5px 0;">İstanbul Üniversitesi-Cerrahpaşa | Odyoloji Bölümü</p>
+                    <span id="seviye-badge" class="badge badge-med" style="font-size:0.9rem;">Analizler Yükleniyor...</span>
+                </div>
+            </div>
+
+            <!-- İSTATİSTİK KARTLARI (GRID) -->
+            <div class="dashboard-grid">
+                <!-- Kart 1 -->
+                <div class="stat-card">
+                    <div class="stat-icon icon-blue"><i class="fas fa-folder-open"></i></div>
+                    <div class="stat-info">
+                        <h3 id="toplam-vaka">0</h3>
+                        <p>Çözülen Vaka</p>
+                    </div>
+                </div>
+                <!-- Kart 2 -->
+                <div class="stat-card">
+                    <div class="stat-icon icon-green"><i class="fas fa-star"></i></div>
+                    <div class="stat-info">
+                        <h3 id="ortalama-puan">0</h3>
+                        <p>Ortalama Puan</p>
+                    </div>
+                </div>
+                <!-- Kart 3 -->
+                <div class="stat-card">
+                    <div class="stat-icon icon-orange"><i class="fas fa-trophy"></i></div>
+                    <div class="stat-info">
+                        <h3 id="en-yuksek">0</h3>
+                        <p>En Yüksek Puan</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- GEÇMİŞ TABLOSU -->
+        <div class="card leaderboard-panel">
+            <h2 style="display:flex; align-items:center; gap:10px;">
+                <i class="fas fa-history" style="color:var(--text-muted);"></i> Detaylı Rapor Geçmişi
+            </h2>
             
             <div style="overflow-x: auto;">
-                <table style="width:100%; border-collapse:collapse;">
+                <table id="gecmis-tablosu">
                     <thead>
-                        <tr style="background:#f8fafc; color:#64748b; font-size:0.9rem;">
-                            <th style="padding:15px; text-align:left;">Tarih</th>
-                            <th style="padding:15px; text-align:left;">Vaka</th>
-                            <th style="padding:15px; text-align:left;">Rapor Özeti</th>
-                            <th style="padding:15px; text-align:left;">AI Yorumu</th>
-                            <th style="padding:15px; text-align:right;">Puan</th>
+                        <tr>
+                            <th>Tarih</th>
+                            <th>Vaka No</th>
+                            <th>Senin Raporun</th>
+                            <th>AI Geri Bildirimi</th>
+                            <th style="text-align: right;">Puan</th>
                         </tr>
                     </thead>
                     <tbody id="tablo-govdesi">
-                        <tr><td colspan="5" style="padding:20px; text-align:center;">Yükleniyor...</td></tr>
+                        <tr><td colspan="5">Veriler getiriliyor...</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
 
-    </main>
+    </div>
 
     <script>
         document.addEventListener("DOMContentLoaded", async function() {
             const token = localStorage.getItem('token');
             const username = localStorage.getItem('username');
-            const isAdmin = localStorage.getItem('isAdmin');
 
             if (!token) { window.location.href = '/login.html'; return; }
 
-            // Sidebar Güncelle
-            document.getElementById('sidebar-username').innerText = username;
-            document.getElementById('avatar-initial').innerText = username.charAt(0).toUpperCase();
-            if (isAdmin === "true") document.getElementById('admin-btn').style.display = "flex";
+            document.getElementById('kullanici-adi').innerText = username;
 
-            // Verileri Çek
             try {
-                const response = await fetch('/my-reports', { headers: { 'Authorization': token } });
+                // Verileri Çek
+                const response = await fetch('/my-reports', {
+                    headers: { 'Authorization': token }
+                });
                 const raporlar = await response.json();
                 
                 const tablo = document.getElementById('tablo-govdesi');
+                const toplamVakaEl = document.getElementById('toplam-vaka');
+                const ortalamaPuanEl = document.getElementById('ortalama-puan');
+                const enYuksekEl = document.getElementById('en-yuksek');
+                const seviyeBadge = document.getElementById('seviye-badge');
+
                 tablo.innerHTML = "";
 
                 if (raporlar.length === 0) {
-                    tablo.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:40px; color:#94a3b8;'>Henüz hiç rapor göndermediniz.</td></tr>";
+                    tablo.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:30px; color:#aaa;'>Henüz hiç vaka çözmediniz.</td></tr>";
+                    seviyeBadge.innerText = "Yeni Başlayan";
+                    seviyeBadge.className = "badge badge-low";
                     return;
                 }
 
+                // --- İSTATİSTİK HESAPLAMA ---
+                let toplamPuan = 0;
+                let maxPuan = 0;
+
                 raporlar.forEach(rapor => {
+                    toplamPuan += rapor.alinanPuan;
+                    if(rapor.alinanPuan > maxPuan) maxPuan = rapor.alinanPuan;
+
+                    // Tabloyu Doldur
                     const tarih = new Date(rapor.olusturulmaTarihi).toLocaleDateString('tr-TR');
-                    
-                    // Puan Rozeti Rengi
-                    let renk = '#fee2e2; color:#991b1b'; // Kırmızı (Düşük)
-                    if (rapor.alinanPuan >= 50) renk = '#fef3c7; color:#92400e'; // Turuncu (Orta)
-                    if (rapor.alinanPuan >= 80) renk = '#dcfce7; color:#166534'; // Yeşil (Yüksek)
+                    let renk = 'badge-low';
+                    if (rapor.alinanPuan >= 50) renk = 'badge-med';
+                    if (rapor.alinanPuan >= 80) renk = 'badge-high';
 
                     const satir = `
-                        <tr style="border-bottom:1px solid #f1f5f9;">
-                            <td style="padding:15px; color:#64748b;">${tarih}</td>
-                            <td style="padding:15px; font-weight:600; color:var(--primary);">#${rapor.vakaID}</td>
-                            <td style="padding:15px; color:#334155; font-style:italic; max-width:250px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                        <tr>
+                            <td style="color:var(--text-muted); font-size:0.9rem;">${tarih}</td>
+                            <td style="font-weight:bold; color:var(--primary);">#${rapor.vakaID}</td>
+                            <td style="color:#ddd; font-style:italic; max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                 "${rapor.raporMetni}"
                             </td>
-                            <td style="padding:15px; font-size:0.9rem; color:#475569;">${rapor.aiYorumu || '-'}</td>
-                            <td style="padding:15px; text-align:right;">
-                                <span style="background:${renk}; padding:5px 10px; border-radius:6px; font-weight:700; font-size:0.85rem;">
-                                    ${rapor.alinanPuan}
-                                </span>
-                            </td>
+                            <td style="font-size:0.9rem; color:#94a3b8;">${rapor.aiYorumu ? rapor.aiYorumu.substring(0, 50) + '...' : '-'}</td>
+                            <td style="text-align: right;"><span class="badge ${renk}" style="font-size:1rem;">${rapor.alinanPuan}</span></td>
                         </tr>
                     `;
                     tablo.innerHTML += satir;
                 });
+
+                // --- İSTATİSTİKLERİ YAZDIR ---
+                const vakaSayisi = raporlar.length;
+                const ortalama = Math.round(toplamPuan / vakaSayisi);
+
+                toplamVakaEl.innerText = vakaSayisi;
+                ortalamaPuanEl.innerText = ortalama;
+                enYuksekEl.innerText = maxPuan;
+
+                // Seviye Belirleme
+                if(ortalama >= 85) {
+                    seviyeBadge.innerText = "🎓 Uzman Odyolog Seviyesi";
+                    seviyeBadge.className = "badge badge-high";
+                    seviyeBadge.style.background = "linear-gradient(135deg, #F59E0B, #D97706)";
+                } else if (ortalama >= 60) {
+                    seviyeBadge.innerText = "📚 Başarılı Öğrenci";
+                    seviyeBadge.className = "badge badge-med";
+                } else {
+                    seviyeBadge.innerText = "📝 Geliştirilmesi Gerek";
+                    seviyeBadge.className = "badge badge-low";
+                }
+
             } catch (error) {
                 console.error(error);
-                document.getElementById('tablo-govdesi').innerHTML = "<tr><td colspan='5'>Hata oluştu.</td></tr>";
+                document.getElementById('tablo-govdesi').innerHTML = "<tr><td colspan='5'>Veri alınırken hata oluştu.</td></tr>";
             }
         });
-
-        function cikisYap() {
-            if(confirm("Çıkış yapılsın mı?")) {
-                localStorage.clear();
-                window.location.href = '/login.html';
-            }
-        }
     </script>
 </body>
 </html>
