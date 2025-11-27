@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <title>Öğrenci Paneli | OdyoCase</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Fontlar -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- İkonlar -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
@@ -26,9 +28,15 @@
                     <i class="fas fa-user-graduate"></i>
                 </div>
                 <div>
-                    <h1 style="margin:0; font-size:1.8rem; color:var(--text-main);">Merhaba, <span id="kullanici-adi" style="color:var(--primary);">Öğrenci</span></h1>
+                    <!-- DÜZELTME BURADA YAPILDI: text-transform: capitalize -->
+                    <h1 style="margin:0; font-size:1.8rem; color:var(--text-main);">
+                        Merhaba, <span id="kullanici-adi" style="color:var(--primary); text-transform: capitalize;">Öğrenci</span>
+                    </h1>
                     <p style="color:var(--text-muted); margin:5px 0;">İstanbul Üniversitesi-Cerrahpaşa | Odyoloji Bölümü</p>
-                    <span id="seviye-badge" class="badge badge-med" style="font-size:0.9rem;">Analizler Yükleniyor...</span>
+                    
+                    <div style="margin-top: 10px;">
+                        <span id="seviye-badge" class="badge badge-med" style="font-size:0.9rem;">Analizler Yükleniyor...</span>
+                    </div>
                 </div>
             </div>
 
@@ -73,8 +81,8 @@
                         <tr>
                             <th>Tarih</th>
                             <th>Vaka No</th>
-                            <th>Senin Raporun</th>
-                            <th>AI Geri Bildirimi</th>
+                            <th>Rapor Özeti</th>
+                            <th>AI Yorumu</th>
                             <th style="text-align: right;">Puan</th>
                         </tr>
                     </thead>
@@ -94,6 +102,7 @@
 
             if (!token) { window.location.href = '/login.html'; return; }
 
+            // Kullanıcı adını yazdır (CSS ile baş harfi büyüyecek)
             document.getElementById('kullanici-adi').innerText = username;
 
             try {
@@ -156,7 +165,7 @@
 
                 // Seviye Belirleme
                 if(ortalama >= 85) {
-                    seviyeBadge.innerText = "🎓 Uzman Odyolog Seviyesi";
+                    seviyeBadge.innerHTML = '<i class="fas fa-crown"></i> Uzman Odyolog Seviyesi';
                     seviyeBadge.className = "badge badge-high";
                     seviyeBadge.style.background = "linear-gradient(135deg, #F59E0B, #D97706)";
                 } else if (ortalama >= 60) {
