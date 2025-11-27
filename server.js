@@ -332,7 +332,7 @@ app.get('/leaderboard', async (req, res) => {
         const siralama = await RaporModel.aggregate([
             { $group: { _id: "$kullaniciAdi", toplamPuan: { $sum: "$alinanPuan" }, cozulenVakaSayisi: { $sum: 1 } } },
             { $sort: { toplamPuan: -1 } },
-            { $limit: 10 }
+            { $limit: 5 }
         ]);
         res.json(siralama);
     } catch (error) { res.status(500).json({ error: "Hata." }); }
