@@ -236,21 +236,37 @@ app.post('/submit-report', verifyToken, async (req, res) => {
         if (!vaka) return res.status(404).json({ success: false, message: "Vaka bulunamadı!" });
 
         // 2. GEMINI PROMPT (Daha Kesin Emirler)
+        // 2. GEMINI PROMPT (ZORLUK SEVİYESİNE GÖRE DAVRANIŞ DEĞİŞTİREN MODEL)
         const prompt = `
             Sen Odyoloji Profesörüsün. Öğrenci sınav kağıdını okuyorsun.
             
             VAKA BİLGİSİ: ${vaka.baslik} - ${vaka.icerik}
             DOĞRU TANI: ${vaka.gizliTani}
-            ÖĞRENCİ CEVABI: "${rapor}"
-            ZORLUK: ${vaka.zorluk}
+            ÖĞRENCİ RAPORU: "${rapor}"
+            ZORLUK SEVİYESİ: ${vaka.zorluk}
 
-            GÖREVİN:
-            Öğrencinin cevabını doğru tanı ile karşılaştır.
+            PUANLAMA STRATEJİSİ (ZORLUĞA GÖRE DAVRAN):
             
-            ÇIKTI FORMATI:
-            Sadece ve sadece geçerli bir JSON objesi döndür. Başka hiçbir kelime, açıklama veya markdown işareti kullanma.
-            Format tam olarak şöyle olmalı:
-            { "puan": 0-100 arası sayı, "yorum": "kısa eğitici geri bildirim" }
+            EĞER VAKA "KOLAY" İSE:
+            - Çok titiz ol. Bu temel bir vaka.
+            - Öğrenci hem tanıyı hem de istenen testleri (Odyometri vb.) eksiksiz yazmalı.
+            - Ufak bir eksikte bile puan kır. Beklenti: Mükemmellik.
+
+            EĞER VAKA "ORTA" İSE:
+            - Standart davran.
+            - Tanı doğruysa ve testler mantıklıysa iyi puan ver.
+
+            EĞER VAKA "ZOR" İSE:
+            - Daha esnek ve analitik ol.
+            - Bu vaka karışık. Öğrenci tam tanıyı bulamasa bile "Ayırıcı Tanı" (Differential Diagnosis) yaptıysa puan ver.
+            - "Şu da olabilir, bu da olabilir ama şu testle ayırırım" gibi bir mantık kurduysa onu ödüllendir.
+            - Ezberden ziyade klinik muhakemeye puan ver.
+
+            GENEL KURAL:
+            - Sadece hastalık adını yazana (Test ve Bulguları yazmayana) asla 50'den fazla verme.
+            - Eğer 80 ve üzeri puan verdiysen "Hocam" diye hitap et.
+            ÇIKTI FORMATI (Sadece JSON):
+            { "puan": 0-100 arası sayı, "yorum": "Kısa, eğitici geri bildirim." }
         `;
 
         console.log("🤖 Gemini'ye gönderiliyor...");
