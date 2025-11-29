@@ -4,28 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OdyoCase | Cerrahpaşa</title>
-    
     <link rel="stylesheet" href="style.css">
-
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-
     <nav class="navbar">
         <h2><i class="fas fa-ear-listen" style="margin-right:10px;"></i>OdyoCase</h2>
         <div>
-            <a id="admin-btn" href="/admin.html" style="display:none;">
-                <i class="fas fa-screwdriver-wrench"></i> Admin
-            </a>
-            
-            <a href="/profil.html" class="nav-profil">
-                <i class="fas fa-user-circle"></i> Profilim
-            </a>
-            
-            <button onclick="cikisYap()" class="nav-cikis">
-                <i class="fas fa-sign-out-alt"></i> Çıkış
-            </button>
+            <a id="admin-btn" href="/admin.html" style="display:none;"><i class="fas fa-screwdriver-wrench"></i> Admin</a>
+            <a href="/profil.html" class="nav-profil"><i class="fas fa-user-circle"></i> Profilim</a>
+            <button onclick="cikisYap()" class="nav-cikis"><i class="fas fa-sign-out-alt"></i> Çıkış</button>
         </div>
     </nav>
 
@@ -34,52 +23,64 @@
     </div>
 
     <div class="container">
-
         <div id="liste-ekrani">
-            
             <div class="leaderboard-panel card">
-                <h2><i class="fas fa-trophy" style="color:var(--accent)"></i> Zirvedekiler</h2>
+                <h2><i class="fas fa-trophy" style="color:var(--accent)"></i> Zirvedekiler (Top 5)</h2>
                 <div style="overflow-x: auto;">
                     <table id="liderlik-tablosu">
                         <thead>
-                            <tr>
-                                <th>Sıra</th>
-                                <th>Öğrenci</th>
-                                <th>Çözülen</th>
-                                <th style="text-align:right;">Puan</th>
-                            </tr>
+                            <tr><th>Sıra</th><th>Öğrenci</th><th>Çözülen</th><th style="text-align:right;">Puan</th></tr>
                         </thead>
-                        <tbody id="liderlik-body">
-                            <tr><td colspan="4">Yükleniyor...</td></tr>
-                        </tbody>
+                        <tbody id="liderlik-body"><tr><td colspan="4">Yükleniyor...</td></tr></tbody>
                     </table>
                 </div>
             </div>
-
             <h3 style="color:var(--text-main); margin: 30px 0 20px 0; font-size: 1.4rem;">
                 <i class="fas fa-folder-open" style="color:var(--primary)"></i> Çözülmeyi Bekleyen Vakalar
             </h3>
-
-            <div id="vaka-listesi">
-                <p>Vakalar yükleniyor...</p>
+            <div id="vaka-listesi"><p>Vakalar yükleniyor...</p></div>
+        
+            <!-- YENİ: ANA SAYFA GERİ BİLDİRİM KUTUSU -->
+            <div class="card" style="margin-top: 30px; border-left: 5px solid var(--accent); background: rgba(245, 158, 11, 0.1);">
+                <h3 style="margin-top:0; color:var(--text-main); display:flex; align-items:center; gap:10px; font-size:1.2rem;">
+                    <i class="fas fa-bullhorn" style="color:var(--accent);"></i> Bize Fikrini Söyle
+                </h3>
+                <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:15px;">
+                    Sistemde bir hata mı var? Veya yeni bir özellik mi istiyorsun? Buradan yazabilirsin.
+                </button>
+                
+                <textarea id="feedback-mesaj" rows="2" placeholder="Mesajınız..." style="background: rgba(0,0,0,0.2); border:1px solid var(--border-color); color:white; width:100%; box-sizing:border-box;"></textarea>
+                
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-top:10px;">
+                    <button id="feedback-btn" style="background: var(--accent); color: white; border: none; padding: 8px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; width: auto; font-size:0.9rem;">
+                        <i class="fas fa-paper-plane"></i> Gönder
+                    </button>
+                    <span id="feedback-sonuc" style="font-weight: 600; font-size:0.9rem;"></span>
+                </div>
             </div>
         </div>
 
         <div id="detay-ekrani" style="display: none;">
-            
-            <button onclick="listeyeDon()" class="btn-back-list">
-                <i class="fas fa-arrow-left"></i> Listeye Dön
-            </button>
-            
+            <button onclick="listeyeDon()" class="btn-back-list"><i class="fas fa-arrow-left"></i> Listeye Dön</button>
             <div style="text-align: center;">
                 <img id="detay-resim" src="" style="width: 100%; max-height: 400px; object-fit: contain; margin-bottom: 25px; border-radius:12px; display: none;">
             </div>
-
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap:10px; margin-bottom:20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap:10px; margin-bottom:10px;">
                 <h2 id="detay-baslik" style="margin:0; font-size:1.8rem; color:var(--primary);">Vaka Başlığı</h2>
                 <span id="detay-zorluk" class="zorluk-etiketi">Zorluk</span>
             </div>
 
+            <div style="background: rgba(59, 130, 246, 0.1); padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid var(--primary); display: flex; gap: 30px; align-items: center;">
+                <div>
+                    <span style="font-weight:bold; color:var(--text-muted); font-size:0.8rem; text-transform:uppercase;">Yaş</span>
+                    <div id="detay-yas" style="font-weight:bold; font-size:1.2rem; color:var(--text-main);">--</div>
+                </div>
+                <div style="width: 1px; height: 30px; background: rgba(255,255,255,0.2);"></div>
+                <div>
+                    <span style="font-weight:bold; color:var(--text-muted); font-size:0.8rem; text-transform:uppercase;">Cinsiyet</span>
+                    <div id="detay-cinsiyet" style="font-weight:bold; font-size:1.2rem; color:var(--text-main);">--</div>
+                </div>
+            </div>
             <div class="card" style="background: rgba(0,0,0,0.2); border:none;">
                 <p id="detay-icerik" style="font-size: 1.1rem; color: #e2e8f0;"></p>
             </div>
@@ -87,22 +88,15 @@
             <hr style="margin: 30px 0; border: 0; border-top: 1px solid var(--border-color);">
             
             <h3 style="margin-bottom:15px; color:var(--text-main);"><i class="fas fa-user-md"></i> Klinik Değerlendirmeniz</h3>
-            
             <textarea id="rapor-alani" rows="8" placeholder="LÜTFEN DETAYLI YAZIN:
-            1. Olası Tanınız nedir?
-            2. Hangi testleri uygulamayı düşünüyorsunuz?
-            3. Beklenen bulgular nelerdir?"></textarea>
+1. Olası Tanınız nedir?
+2. Hangi testleri uygulamayı düşünüyorsunuz?
+3. Beklenen bulgular nelerdir?"></textarea>
             
-            <button id="gonder-butonu">
-                <i class="fas fa-paper-plane"></i> Analiz İçin Gönder
-            </button>
-
+            <button id="gonder-butonu"><i class="fas fa-paper-plane"></i> Analiz İçin Gönder</button>
             <p id="sonuc-mesaji"></p>
         </div>
-
     </div>
-
     <script src="script.js"></script>
-
 </body>
 </html>
