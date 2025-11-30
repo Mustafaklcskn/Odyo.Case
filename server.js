@@ -46,16 +46,17 @@ mongoose.connect(process.env.MONGO_URI)
 const UserSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    isAdmin: { type: Boolean, default: false }
+    isAdmin: { type: Boolean, default: false },
+    school: {type: String}
 });
 const UserModel = mongoose.models.User || mongoose.model("User", UserSchema);
 
-// VAKA ŞEMASI (GÜNCELLENDİ: Yas ve Cinsiyet Eklendi)
+// VAKA ŞEMASI
 const VakaSchema = new mongoose.Schema({
     vakaNo: { type: Number, unique: true },
     baslik: { type: String, required: true },
-    yas: { type: Number, required: true },      // YENİ
-    cinsiyet: { type: String, required: true }, // YENİ
+    yas: { type: Number, required: true },
+    cinsiyet: { type: String, required: true },
     gizliTani: { type: String },
     icerik: { type: String, required: true },
     zorluk: { type: String, enum: ['Kolay', 'Orta', 'Zor'], default: 'Orta' },
@@ -78,7 +79,8 @@ const RaporSchema = new mongoose.Schema({
     aiYorumu: { type: String },
     kullaniciAdi: { type: String },
     vakaID: { type: Number },
-    olusturulmaTarihi: { type: Date, default: Date.now }
+    olusturulmaTarihi: { type: Date, default: Date.now },
+    aiDogruCevap: {type: String}
 });
 const RaporModel = mongoose.models.Rapor || mongoose.model("Rapor", RaporSchema);
 
@@ -100,32 +102,55 @@ app.get('/register.html', (req, res) => res.sendFile(path.join(__dirname, 'regis
 app.get('/profil.html', (req, res) => res.sendFile(path.join(__dirname, 'profil.html')));
 app.get('/admin.html', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 
+// --- KAYIT OL ---
 app.post('/register', async (req, res) => {
-    const { username, password } = req.body;
+    const { username, password, phone, school } = req.body;
     try {
+        const temizKadi = username.toLowerCase().trim(); 
         const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = new UserModel({ username, password: hashedPassword });
+        const newUser = new UserModel({ 
+            username: temizKadi,
+            password: hashedPassword,
+            phone: phone,
+            school: school
+        });
         await newUser.save();
         res.json({ success: true, message: "Kayıt başarılı!" });
-    } catch (error) { res.json({ success: false, message: "Kullanıcı adı alınmış." }); }
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Kayıt hatası." });
+    }
 });
 
+// --- GİRİŞ YAP ---
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
     try {
-        const user = await UserModel.findOne({ username });
+        const temizKadi = username.toLowerCase().trim();
+        const user = await UserModel.findOne({ username: temizKadi });
+        
         if (!user) return res.status(400).json({ success: false, message: "Kullanıcı bulunamadı!" });
+
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(400).json({ success: false, message: "Şifre hatalı!" });
+
         const token = jwt.sign({ id: user._id, username: user.username }, "GIZLI_KELIME", { expiresIn: "1h" });
-        res.json({ success: true, message: "Giriş başarılı!", token: token, username: user.username, isAdmin: user.isAdmin });
-    } catch (error) { res.status(500).json({ success: false, message: "Hata." }); }
+
+        res.json({ 
+            success: true, 
+            message: "Giriş başarılı!", 
+            token: token, 
+            username: user.username,
+            school: user.school,
+            isAdmin: user.isAdmin 
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Sunucu hatası." });
+    }
 });
 
-// --- VAKA EKLEME (GÜNCELLENDİ) ---
+// --- VAKA EKLEME ---
 app.post('/admin/add-case', upload.single('vakaResmi'), async (req, res) => {
     const resimYolu = req.file ? '/uploads/' + req.file.filename : null;
-    // YENİ: yas ve cinsiyet verilerini al
     const { baslik, yas, cinsiyet, gizliTani, icerik, zorluk } = req.body;
 
     try {
@@ -136,8 +161,8 @@ app.post('/admin/add-case', upload.single('vakaResmi'), async (req, res) => {
         const yeniVaka = new VakaModel({
             vakaNo: yeniVakaNo,
             baslik, 
-            yas,        // KAYDET
-            cinsiyet,   // KAYDET
+            yas,
+            cinsiyet,
             gizliTani, 
             icerik, 
             zorluk,
@@ -164,6 +189,7 @@ app.get('/cases', async (req, res) => {
     } catch (error) { res.status(500).json({ error: "Hata." }); }
 });
 
+// --- RAPOR GÖNDERME VE AI DEĞERLENDİRME ---
 app.post('/submit-report', verifyToken, async (req, res) => {
     const { rapor, vakaID } = req.body;
     const raporuGonderen = req.user.username;
@@ -175,26 +201,35 @@ app.post('/submit-report', verifyToken, async (req, res) => {
         const vaka = await VakaModel.findOne({ vakaNo: vakaID });
         if (!vaka) return res.status(404).json({ success: false, message: "Vaka bulunamadı!" });
 
+        // GEMINI PROMPT
         const prompt = `
             Sen Odyoloji Profesörüsün. Öğrenci sınav kağıdını okuyorsun.
+            
             VAKA: ${vaka.baslik} (Yaş: ${vaka.yas}, Cinsiyet: ${vaka.cinsiyet})
             HİKAYE: ${vaka.icerik}
-            DOĞRU TANI: ${vaka.gizliTani}
+            GERÇEK TANI (Gizli): ${vaka.gizliTani}
             ÖĞRENCİ RAPORU: "${rapor}"
             ZORLUK: ${vaka.zorluk}
 
-            PUANLAMA:
-            - Tanı + Testler + Beklenen Bulgular varsa yüksek puan ver.
-            - Sadece tanı yazarsa en fazla 40 ver.
-            
-            ÇIKTI (SADECE JSON): { "puan": (0-100), "yorum": "Kısa geri bildirim" }
+            GÖREVLERİN:
+            1. Öğrenciye puan ver ve eksiklerini söyle (Yorum).
+            2. Bu vaka için "ALTIN STANDART" bir rapor yaz (IdealCevap).
+               Bu ideal cevapta; Tanı, yapılması gereken testler ve beklenen bulgular net bir dille, bir uzman ağzından yazılmalı.
+
+            ÇIKTI FORMATI (SADECE VE SADECE BU JSON):
+            { 
+                "puan": 0-100 arası sayı, 
+                "yorum": "Öğrenciye hitaben kısa geri bildirim",
+                "idealCevap": "Olası tanı [Tanı]dır. Odyometride [Bulgu], Timpanogramda [Bulgu] beklerim. [Test] yapılmalıdır çünkü..."
+            }
         `;
 
+        console.log("Gemini'ye gidiyor...");
         const result = await model.generateContent(prompt);
         const response = await result.response;
         const text = response.text();
         
-        let aiResult = { puan: 50, yorum: "Analiz edilemedi." };
+        let aiResult = { puan: 50, yorum: "Hata", idealCevap: "Oluşturulamadı." };
         try {
             const jsonBas = text.indexOf('{');
             const jsonSon = text.lastIndexOf('}');
@@ -208,19 +243,32 @@ app.post('/submit-report', verifyToken, async (req, res) => {
         if (vaka.zorluk === 'Zor') carpan = 1.5;
         let finalPuan = Math.round(aiResult.puan * carpan);
 
+        // KAYDET
         const yeniRapor = new RaporModel({
             raporMetni: rapor,
             alinanPuan: finalPuan,
             aiYorumu: aiResult.yorum,
+            aiDogruCevap: aiResult.idealCevap,
             kullaniciAdi: raporuGonderen,
             vakaID: vakaID
         });
         await yeniRapor.save();
 
-        res.json({ success: true, message: aiResult.yorum, puan: finalPuan });
+        res.json({ 
+            success: true, 
+            message: aiResult.yorum, 
+            puan: finalPuan,
+            dogruCevap: aiResult.idealCevap 
+        });
+    
+    // BURASI EKSİKTİ - ŞİMDİ EKLENDİ
+    } catch (error) {
+        console.error("Rapor hatası:", error);
+        res.status(500).json({ success: false, message: "Sunucu hatası." });
+    }
+}); // /submit-report BURADA BİTİYOR
 
-    } catch (error) { res.status(500).json({ success: false, message: "AI Hatası." }); }
-});
+// --- DİĞER ROTALAR ---
 
 app.get('/leaderboard', async (req, res) => {
     try {
@@ -240,7 +288,7 @@ app.get('/my-reports', verifyToken, async (req, res) => {
     } catch (error) { res.status(500).json({ error: "Hata." }); }
 });
 
-// --- GERİ BİLDİRİM GÖNDER (ÖĞRENCİ) ---
+// --- GERİ BİLDİRİM ---
 app.post('/submit-feedback', verifyToken, async (req, res) => {
     try {
         const { mesaj } = req.body;
@@ -257,10 +305,8 @@ app.post('/submit-feedback', verifyToken, async (req, res) => {
     }
 });
 
-// --- GERİ BİLDİRİMLERİ OKU (ADMİN) ---
 app.get('/admin/feedbacks', async (req, res) => {
     try {
-        // En yeniden eskiye sırala
         const feedbacks = await FeedbackModel.find().sort({ tarih: -1 });
         res.json(feedbacks);
     } catch (error) {
@@ -273,7 +319,6 @@ app.put('/admin/toggle-feedback/:id', async (req, res) => {
         const feedback = await FeedbackModel.findById(req.params.id);
         if (!feedback) return res.status(404).json({ success: false, message: "Bulunamadı" });
 
-        // Durumu tersine çevir (True ise False, False ise True yap)
         feedback.okundu = !feedback.okundu;
         await feedback.save();
 
@@ -283,7 +328,6 @@ app.put('/admin/toggle-feedback/:id', async (req, res) => {
     }
 });
 
-// --- GERİ BİLDİRİM SİL (ADMİN) ---
 app.delete('/admin/delete-feedback/:id', async (req, res) => {
     try {
         const silinen = await FeedbackModel.findByIdAndDelete(req.params.id);
@@ -297,4 +341,5 @@ app.delete('/admin/delete-feedback/:id', async (req, res) => {
     }
 });
 
+// SUNUCUYU BAŞLAT
 app.listen(port, () => { console.log(`🚀 Sunucu çalışıyor: http://localhost:${port}`); });

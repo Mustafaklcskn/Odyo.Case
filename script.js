@@ -163,16 +163,39 @@ document.addEventListener("DOMContentLoaded", function() {
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    sonucMesaji.innerText = `PUAN: ${data.puan} - ${data.message}`;
-                    sonucMesaji.style.color = "var(--secondary)";
+                    // --- BURASI GÜNCELLENDİ: HTML KUTULARI EKLENDİ ---
+                    sonucMesaji.innerHTML = `
+                        <div style="margin-bottom:15px; text-align:center;">
+                            <span style="font-size:1.8rem; color:var(--secondary); font-weight:800;">PUAN: ${data.puan}</span>
+                        </div>
+                        
+                        <!-- AI Yorumu Kutusu -->
+                        <div style="background:rgba(59, 130, 246, 0.1); padding:15px; border-radius:10px; border-left:4px solid var(--primary); margin-bottom:15px; text-align:left;">
+                            <strong style="display:block; color:var(--primary); margin-bottom:5px; font-size:0.9rem; text-transform:uppercase;">AI Hoca Yorumu:</strong>
+                            <span style="color:#e2e8f0;">${data.message}</span>
+                        </div>
+
+                        <!-- İdeal Cevap Kutusu -->
+                        <div style="background:rgba(16, 185, 129, 0.1); padding:15px; border-radius:10px; border-left:4px solid var(--secondary); text-align:left;">
+                            <strong style="display:block; color:var(--secondary); margin-bottom:5px; font-size:0.9rem; text-transform:uppercase;">✅ İdeal Uzman Yaklaşımı:</strong>
+                            <span style="font-style:italic; color:#cbd5e1; font-size:0.95rem;">${data.dogruCevap || "Cevap oluşturulamadı."}</span>
+                        </div>
+                    `;
+                    // ----------------------------------------------------
+
+                    sonucMesaji.style.color = "inherit"; // Rengi CSS yönetsin
+                    
                     if(sayacInterval) clearInterval(sayacInterval);
                     cozulmusVakalar.push(seciliVakaID);
+                    
                     gonderButonu.innerHTML = '<i class="fas fa-check"></i> Tamamlandı';
                     gonderButonu.style.background = "#475569";
+                    gonderButonu.style.cursor = "not-allowed";
                     raporAlani.disabled = true;
+
                 } else {
-                    sonucMesaji.innerText = data.message;
-                    sonucMesaji.style.color = "var(--danger)";
+                    // HATA DURUMU
+                    sonucMesaji.innerHTML = `<span style="color:var(--danger); font-weight:bold;">${data.message}</span>`;
                     gonderButonu.disabled = false;
                 }
             }).catch(err => { sonucMesaji.innerText = "Hata oluştu."; gonderButonu.disabled = false; });
@@ -191,51 +214,6 @@ document.addEventListener("DOMContentLoaded", function() {
         if(confirm("Çıkış yapmak istiyor musunuz?")) { localStorage.clear(); window.location.href = '/login.html'; }
     };
 
-// --- GERİ BİLDİRİM GÖNDERME (ANA SAYFA) ---
-    const feedbackBtn = document.getElementById('feedback-btn');
-    
-    if(feedbackBtn) {
-        feedbackBtn.addEventListener("click", function() {
-            const mesajKutusu = document.getElementById('feedback-mesaj');
-            const sonucLabel = document.getElementById('feedback-sonuc');
-            
-            if(!mesajKutusu.value.trim()) {
-                alert("Lütfen boş mesaj göndermeyin.");
-                return;
-            }
 
-            sonucLabel.innerText = "Gönderiliyor...";
-            sonucLabel.style.color = "var(--text-muted)";
-            feedbackBtn.disabled = true;
-
-            fetch('/submit-feedback', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': token },
-                body: JSON.stringify({ mesaj: mesajKutusu.value })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if(data.success) {
-                    sonucLabel.innerText = "✅ İletildi, teşekkürler!";
-                    sonucLabel.style.color = "var(--secondary)";
-                    mesajKutusu.value = ""; // Temizle
-                    
-                    // 3 saniye sonra mesajı sil ve butonu aç
-                    setTimeout(() => {
-                        sonucLabel.innerText = "";
-                        feedbackBtn.disabled = false;
-                    }, 3000);
-                } else {
-                    sonucLabel.innerText = "❌ Hata oluştu";
-                    sonucLabel.style.color = "var(--danger)";
-                    feedbackBtn.disabled = false;
-                }
-            })
-            .catch(err => {
-                sonucLabel.innerText = "Bağlantı hatası";
-                feedbackBtn.disabled = false;
-            });
-        });
-    }
 
 });

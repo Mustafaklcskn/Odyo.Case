@@ -28,6 +28,12 @@
                 <input type="password" id="sifre" placeholder="Güçlü Bir Şifre Belirleyin">
                 <i class="fas fa-eye toggle-password" onclick="sifreyiGosterGizle(this)"></i>
             </div>
+            
+            <!-- Okul Bilgisi -->
+            <div class="input-wrapper">
+                <i class="fas fa-university icon-left"></i>
+                <input type="text" id="okul" placeholder="Okulunuz (Örn: Hacettepe, Cerrahpaşa)">
+            </div>
 
             <button id="gonder-butonu" onclick="kayitOl()">Hemen Kaydol</button>
             
@@ -60,6 +66,7 @@
             const kadi = document.getElementById('kadi').value;
             const sifre = document.getElementById('sifre').value;
             const mesaj = document.getElementById('mesaj');
+            const okul = document.getElementById('okul').value;
 
             if(!kadi || !sifre) {
                 mesaj.style.color = "var(--accent)"; // Sarı renk
@@ -74,7 +81,7 @@
                 const res = await fetch('/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: kadi, password: sifre })
+                    body: JSON.stringify({ username: kadi, password: sifre, school: okul})
                 });
                 const data = await res.json();
 
