@@ -1,5 +1,40 @@
 document.addEventListener("DOMContentLoaded", function() {
     
+    // --- YENİ BİLDİRİM FONKSİYONU ---
+    window.showToast = function(mesaj, tip = 'info') {
+        let container = document.getElementById('toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toast-container';
+            document.body.appendChild(container);
+        }
+
+        const iconMap = {
+            'success': 'fa-check-circle',
+            'error': 'fa-times-circle',
+            'warning': 'fa-exclamation-triangle',
+            'info': 'fa-info-circle'
+        };
+        const renkMap = {
+            'success': '#10b981', // Yeşil
+            'error': '#ef4444',   // Kırmızı
+            'warning': '#f59e0b', // Turuncu
+            'info': '#3b82f6'     // Mavi
+        };
+
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${tip}`;
+        toast.innerHTML = `
+            <i class="fas ${iconMap[tip]}" style="color:${renkMap[tip]}"></i>
+            <span>${mesaj}</span>
+        `;
+
+        container.appendChild(toast);
+
+        // 3 saniye sonra DOM'dan sil
+        setTimeout(() => { toast.remove(); }, 3000);
+    };
+
     // 1. GİRİŞ KONTROLÜ
     const token = localStorage.getItem('token');
     const isAdmin = localStorage.getItem('isAdmin');
@@ -210,10 +245,63 @@ document.addEventListener("DOMContentLoaded", function() {
         verileriHazirla(); 
     };
 
-    window.cikisYap = function() {
-        if(confirm("Çıkış yapmak istiyor musunuz?")) { localStorage.clear(); window.location.href = '/login.html'; }
+    // --- ÖZEL ONAY PENCERESİ FONKSİYONU ---
+    window.showConfirm = function(mesaj, callback) {
+        // Varsa eskileri temizle
+        const eski = document.querySelector('.confirm-overlay');
+        if(eski) eski.remove();
+
+        const overlay = document.createElement('div');
+        overlay.className = 'confirm-overlay';
+        overlay.innerHTML = `
+            <div class="confirm-box">
+                <i class="fas fa-question-circle" style="font-size:3rem; color:#f59e0b; margin-bottom:15px; display:block;"></i>
+                <h3 style="margin:0 0 10px 0; color:white;">Emin misiniz?</h3>
+                <p style="color:#94a3b8; margin:0;">${mesaj}</p>
+                <div class="confirm-buttons">
+                    <button class="btn-confirm-no" id="btn-iptal">Vazgeç</button>
+                    <button class="btn-confirm-yes" id="btn-onayla">Evet, Yap</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        // Buton Olayları
+        document.getElementById('btn-iptal').onclick = () => overlay.remove();
+        document.getElementById('btn-onayla').onclick = () => {
+            overlay.remove();
+            callback(); // İşlemi gerçekleştir
+        };
     };
 
+    // --- ÇIKIŞ YAP (GÜNCELLENDİ) ---
+    window.cikisYap = function() {
+        showConfirm("Hesabınızdan çıkış yapılacak.", function() {
+            localStorage.clear();
+            window.location.href = '/login.html';
+        });
+    };
 
+// --- GÜVENLİK KORUMALARI ---
+
+// 1. Sağ Tıklamayı Engelle
+document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+});
+
+// 2. Kopyalama ve Geliştirici Araçları Kısayollarını Engelle
+document.addEventListener('keydown', function(e) {
+    // Ctrl+C (Kopyala), Ctrl+X (Kes), Ctrl+U (Kaynak Kod), F12 (Geliştirici)
+    if (
+        (e.ctrlKey && (e.key === 'c' || e.key === 'C')) || 
+        (e.ctrlKey && (e.key === 'x' || e.key === 'X')) || 
+        (e.ctrlKey && (e.key === 'u' || e.key === 'U')) || 
+        e.key === 'F12'
+    ) {
+        e.preventDefault();
+        // İstersen caydırıcı bir uyarı da gösterebilirsin:
+        // alert("Sınav güvenliği nedeniyle kopyalama yapmak yasaktır!");
+    }
+});
 
 });

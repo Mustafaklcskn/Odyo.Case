@@ -71,7 +71,7 @@
                 <textarea id="vaka-icerik" rows="6" placeholder="Hastanın şikayeti ve öyküsü..."></textarea>
             </div>
 
-            <button onclick="vakaEkle()" class="admin-btn-save"><i class="fas fa-save"></i> Vakayı Kaydet</button>
+            <button onclick="vakaIslemi()" class="admin-btn-save"><i class="fas fa-save"></i> Vakayı Kaydet</button>
             <p id="sonuc" style="margin-top: 15px; font-weight: 600; text-align: center; min-height: 20px;"></p>
         </div>
 
@@ -94,14 +94,145 @@
     </div>
 
     <script>
-        // SAYFA AÇILINCA HEM VAKALARI HEM MESAJLARI GETİR
+        // --- 1. BİLDİRİM FONKSİYONU (Zaten eklemiştik) ---
+        function showToast(mesaj, tip = 'info') {
+            let container = document.getElementById('toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'toast-container';
+                document.body.appendChild(container);
+            }
+            const iconMap = { 'success': 'fa-check-circle', 'error': 'fa-times-circle', 'warning': 'fa-exclamation-triangle', 'info': 'fa-info-circle' };
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${tip}`;
+            toast.innerHTML = `<i class="fas ${iconMap[tip] || 'fa-info-circle'}"></i><span>${mesaj}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => { toast.remove(); }, 3000);
+        }
+
+        // --- 2. ÖZEL ONAY PENCERESİ (İŞTE BUNU BURAYA YAPIŞTIR) ---
+        function showConfirm(mesaj, callback) {
+            // Varsa eski pencereyi temizle
+            const eski = document.querySelector('.confirm-overlay');
+            if(eski) eski.remove();
+
+            // Yeni pencere oluştur
+            const overlay = document.createElement('div');
+            overlay.className = 'confirm-overlay';
+            overlay.innerHTML = `
+                <div class="confirm-box">
+                    <i class="fas fa-question-circle" style="font-size:3rem; color:#f59e0b; margin-bottom:15px; display:block;"></i>
+                    <h3 style="margin:0 0 10px 0; color:white;">Emin misiniz?</h3>
+                    <p style="color:#94a3b8; margin:0;">${mesaj}</p>
+                    <div class="confirm-buttons">
+                        <button class="btn-confirm-no" id="btn-iptal">Vazgeç</button>
+                        <button class="btn-confirm-yes" id="btn-onayla">Evet, Yap</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+
+            // Butonlara Tıklanınca Ne Olacak?
+            document.getElementById('btn-iptal').onclick = () => overlay.remove();
+            document.getElementById('btn-onayla').onclick = () => {
+                overlay.remove();
+                callback(); // İşlemi gerçekleştir (Silme vs.)
+            };
+        }
+        
+        // GLOBAL DEĞİŞKENLER
+        let duzenlemeModu = false;
+        let seciliVakaNo = null;
+
         document.addEventListener("DOMContentLoaded", function() {
             vakalariListele();
-            feedbacksGetir(); // <--- İŞTE EKSİK OLAN BUYDU
+            feedbacksGetir();
         });
 
-        // --- VAKA EKLEME ---
-        async function vakaEkle() {
+        // --- LİSTELEME FONKSİYONU ---
+        async function vakalariListele() {
+            const listeKutusu = document.getElementById('yonetim-listesi');
+            try {
+                const response = await fetch('/cases');
+                const vakalar = await response.json();
+                listeKutusu.innerHTML = "";
+                
+                if (!Array.isArray(vakalar) || vakalar.length === 0) {
+                    listeKutusu.innerHTML = "<p style='color:var(--text-muted);'>Sistemde henüz vaka yok.</p>"; return;
+                }
+
+                vakalar.reverse().forEach(vaka => {
+                    const div = document.createElement('div');
+                    div.className = 'admin-case-item';
+                    div.innerHTML = `
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span style="font-weight:bold; color:var(--primary); background:rgba(59,130,246,0.1); padding:2px 8px; border-radius:5px;">#${vaka.vakaNo}</span> 
+                            <span>${vaka.baslik}</span>
+                        </div>
+                        
+                        <div style="display:flex; gap:10px;">
+                            <button onclick="duzenlemeyiBaslat(${vaka.vakaNo})" style="background:var(--accent); color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:600;">
+                                <i class="fas fa-edit"></i> Düzenle
+                            </button>
+                            
+                            <button onclick="vakaSil(${vaka.vakaNo})" class="delete-btn">
+                                <i class="fas fa-trash-alt"></i> Sil
+                            </button>
+                        </div>
+                    `;
+                    listeKutusu.appendChild(div);
+                });
+            } catch (error) { console.error(error); }
+        }
+
+        // --- DÜZENLEME MODUNU AÇ ---
+        async function duzenlemeyiBaslat(no) {
+            const sonucKutusu = document.getElementById('sonuc');
+            sonucKutusu.innerText = "Veriler getiriliyor...";
+            
+            try {
+                // Admin'e özel rotadan gizli tanıyı da içeren veriyi çek
+                const res = await fetch(`/admin/case/${no}`);
+                const data = await res.json();
+                
+                if(data.success) {
+                    const vaka = data.vaka;
+                    
+                    // Formu doldur
+                    document.getElementById('vaka-baslik').value = vaka.baslik;
+                    document.getElementById('vaka-tani').value = vaka.gizliTani || "";
+                    document.getElementById('vaka-yas').value = vaka.yas;
+                    document.getElementById('vaka-cinsiyet').value = vaka.cinsiyet;
+                    document.getElementById('vaka-zorluk').value = vaka.zorluk;
+                    document.getElementById('vaka-icerik').value = vaka.icerik;
+
+                    // Butonu ve Modu Değiştir
+                    duzenlemeModu = true;
+                    seciliVakaNo = no;
+                    
+                    const buton = document.querySelector('.admin-btn-save');
+                    buton.innerHTML = `<i class="fas fa-sync-alt"></i> Değişiklikleri Güncelle (#${no})`;
+                    buton.style.background = "var(--accent)"; // Turuncu yapalım ki güncelleme olduğu belli olsun
+                    
+                    // İptal Butonu Ekle (Eğer yoksa)
+                    let iptalBtn = document.getElementById('iptal-btn');
+                    if(!iptalBtn) {
+                        iptalBtn = document.createElement('button');
+                        iptalBtn.id = 'iptal-btn';
+                        iptalBtn.innerText = "İptal Et / Yeni Ekle";
+                        iptalBtn.style.cssText = "width:100%; margin-top:10px; background:#475569; color:white; padding:10px; border:none; border-radius:10px; cursor:pointer;";
+                        iptalBtn.onclick = formuSifirla;
+                        buton.parentNode.insertBefore(iptalBtn, buton.nextSibling);
+                    }
+
+                    sonucKutusu.innerText = "";
+                    window.scrollTo({ top: 0, behavior: 'smooth' }); // Sayfayı yukarı kaydır
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        // --- KAYDET / GÜNCELLE İŞLEMİ ---
+        async function vakaIslemi() {
             const baslik = document.getElementById('vaka-baslik').value;
             const tani = document.getElementById('vaka-tani').value;
             const yas = document.getElementById('vaka-yas').value;
@@ -117,7 +248,6 @@
                 return;
             }
 
-            sonucKutusu.innerText = "⏳ Kaydediliyor...";
             const formData = new FormData();
             formData.append('baslik', baslik);
             formData.append('gizliTani', tani);
@@ -127,18 +257,29 @@
             formData.append('icerik', icerik);
             if (resimDosyasi) formData.append('vakaResmi', resimDosyasi);
 
+            sonucKutusu.innerText = "⏳ İşlem yapılıyor...";
+            
             try {
-                const response = await fetch('/admin/add-case', { method: 'POST', body: formData });
+                let url, method;
+                
+                if (duzenlemeModu) {
+                    // GÜNCELLEME MODU
+                    url = `/admin/update-case/${seciliVakaNo}`;
+                    method = 'PUT';
+                } else {
+                    // YENİ EKLEME MODU
+                    url = '/admin/add-case';
+                    method = 'POST';
+                }
+
+                const response = await fetch(url, { method: method, body: formData });
                 const data = await response.json();
+                
                 if(data.success) {
                     sonucKutusu.innerHTML = `<i class="fas fa-check-circle"></i> ${data.message}`;
                     sonucKutusu.style.color = "var(--secondary)";
-                    document.getElementById('vaka-baslik').value = "";
-                    document.getElementById('vaka-tani').value = "";
-                    document.getElementById('vaka-yas').value = "";
-                    document.getElementById('vaka-icerik').value = "";
-                    document.getElementById('vaka-resim').value = "";
-                    vakalariListele();
+                    formuSifirla(); // İşlem bitince formu temizle
+                    vakalariListele(); // Listeyi yenile
                 } else {
                     sonucKutusu.innerText = "Hata: " + data.message;
                     sonucKutusu.style.color = "var(--danger)";
@@ -149,134 +290,99 @@
             }
         }
 
-        // --- VAKA LİSTELEME ---
-        async function vakalariListele() {
-            const listeKutusu = document.getElementById('yonetim-listesi');
-            try {
-                const response = await fetch('/cases');
-                const vakalar = await response.json();
-                listeKutusu.innerHTML = "";
-                if (!Array.isArray(vakalar) || vakalar.length === 0) {
-                    listeKutusu.innerHTML = "<p style='color:var(--text-muted);'>Sistemde henüz vaka yok.</p>"; return;
-                }
-                vakalar.reverse().forEach(vaka => {
-                    const div = document.createElement('div');
-                    div.className = 'admin-case-item';
-                    div.innerHTML = `
-                        <div><span style="font-weight:bold; color:var(--primary);">#${vaka.vakaNo}</span> ${vaka.baslik}</div>
-                        <button onclick="vakaSil(${vaka.vakaNo})" class="delete-btn"><i class="fas fa-trash-alt"></i> Sil</button>
-                    `;
-                    listeKutusu.appendChild(div);
-                });
-            } catch (error) { console.error(error); }
+        // --- FORMU SIFIRLA (İPTAL ET) ---
+        function formuSifirla() {
+            document.getElementById('vaka-baslik').value = "";
+            document.getElementById('vaka-tani').value = "";
+            document.getElementById('vaka-yas').value = "";
+            document.getElementById('vaka-icerik').value = "";
+            document.getElementById('vaka-resim').value = ""; // Dosyayı temizle
+            document.getElementById('vaka-cinsiyet').selectedIndex = 0;
+            document.getElementById('vaka-zorluk').selectedIndex = 1;
+
+            duzenlemeModu = false;
+            seciliVakaNo = null;
+
+            const buton = document.querySelector('.admin-btn-save');
+            buton.innerHTML = `<i class="fas fa-save"></i> Vakayı Kaydet`;
+            buton.style.background = ""; // Orijinal rengine dön
+            
+            const iptalBtn = document.getElementById('iptal-btn');
+            if(iptalBtn) iptalBtn.remove();
         }
 
-        // --- VAKA SİLME ---
+        // --- DİĞER FONKSİYONLAR (Aynı Kalıyor) ---
+       // --- VAKA SİL ---
         async function vakaSil(no) {
-            if (!confirm(`Vaka ${no} silinecek?`)) return;
-            try {
-                const response = await fetch('/admin/delete-case/' + no, { method: 'DELETE' });
-                const data = await response.json();
-                if (data.success) vakalariListele();
-                else alert("Hata: " + data.message);
-            } catch (error) { alert("Hata."); }
+            // confirm yerine showConfirm kullanıyoruz
+            showConfirm(`Vaka #${no} kalıcı olarak silinecek.`, async function() {
+                try {
+                    const response = await fetch('/admin/delete-case/' + no, { method: 'DELETE' });
+                    const data = await response.json();
+                    if (data.success) {
+                        showToast("Vaka başarıyla silindi.", "success");
+                        vakalariListele();
+                    } else {
+                        showToast(data.message, "error");
+                    }
+                } catch (error) { showToast("Hata oluştu.", "error"); }
+            });
         }
 
-        // --- GERİ BİLDİRİMLERİ GETİR (YENİ) --
-        // --- GERİ BİLDİRİMLERİ GETİR ---
+        // Feedback fonksiyonlarını buraya aynen koruyarak ekleyebilirsin...
+        // (feedbacksGetir, durumDegistir, feedbackSil kodlarını server.js'den hatırladığın gibi buraya ekle veya mevcut haliyle bırak)
+        
         async function feedbacksGetir() {
-            const listeDiv = document.getElementById('feedback-listesi');
-            try {
-                const response = await fetch('/admin/feedbacks');
-                const mesajlar = await response.json();
-                
-                listeDiv.innerHTML = "";
-
-                if (!Array.isArray(mesajlar) || mesajlar.length === 0) {
-                    listeDiv.innerHTML = "<p style='color:var(--text-muted); padding:10px;'>Henüz mesaj yok.</p>";
-                    return;
-                }
-
-                mesajlar.forEach(msg => {
-                    const tarih = new Date(msg.tarih).toLocaleDateString('tr-TR');
-                    
-                    // Stil Değişkenleri
-                    const opaklik = msg.okundu ? "0.5" : "1";
-                    const ikon = msg.okundu ? "fa-check-circle" : "fa-circle";
-                    const renk = msg.okundu ? "var(--secondary)" : "var(--text-muted)";
-
-                    const div = document.createElement('div');
-                    div.style.cssText = `
-                        background: rgba(255,255,255,0.05); 
-                        border: 1px solid var(--border-color); 
-                        padding: 15px; 
-                        border-radius: 10px; 
-                        margin-bottom: 10px; 
-                        display: flex; 
-                        align-items: center; 
-                        justify-content: space-between;
-                        opacity: ${opaklik}; 
-                        transition: 0.3s;
-                    `;
-                    
-                    div.innerHTML = `
-                        <div style="flex-grow: 1;">
-                            <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                                <strong style="color:var(--primary); text-transform:capitalize;">
-                                    <i class="fas fa-user-circle"></i> ${msg.kullaniciAdi}
-                                </strong>
-                                <small style="color:var(--text-muted); margin-right:15px;">${tarih}</small>
-                            </div>
-                            <div style="color:var(--text-main); font-style:italic; padding-left:10px; border-left:3px solid var(--accent);">
-                                "${msg.mesaj}"
-                            </div>
-                        </div>
-
-                        <!-- BUTONLAR GRUBU -->
-                        <div style="display:flex; gap:10px; align-items:center;">
-                            
-                            <!-- 1. OKUNDU BUTONU -->
-                            <button onclick="durumDegistir('${msg._id}')" style="background:transparent; border:none; cursor:pointer; color:${renk}; font-size:1.5rem;" title="Okundu/Okunmadı">
-                                <i class="fas ${ikon}"></i>
-                            </button>
-
-                            <!-- 2. SİLME BUTONU (YENİ) -->
-                            <button onclick="feedbackSil('${msg._id}')" style="background:rgba(239,68,68,0.2); border:none; cursor:pointer; color:var(--danger); padding:8px; border-radius:50%; transition:0.2s;" title="Kalıcı Olarak Sil">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-
-                        </div>
-                    `;
-                    listeDiv.appendChild(div);
-                });
-            } catch (error) { console.error(error); }
+             const listeDiv = document.getElementById('feedback-listesi');
+             try {
+                 const response = await fetch('/admin/feedbacks');
+                 const mesajlar = await response.json();
+                 listeDiv.innerHTML = "";
+                 if (!Array.isArray(mesajlar) || mesajlar.length === 0) {
+                     listeDiv.innerHTML = "<p style='color:var(--text-muted); padding:10px;'>Henüz mesaj yok.</p>";
+                     return;
+                 }
+                 mesajlar.forEach(msg => {
+                     const tarih = new Date(msg.tarih).toLocaleDateString('tr-TR');
+                     const opaklik = msg.okundu ? "0.5" : "1";
+                     const ikon = msg.okundu ? "fa-check-circle" : "fa-circle";
+                     const renk = msg.okundu ? "var(--secondary)" : "var(--text-muted)";
+                     const div = document.createElement('div');
+                     div.style.cssText = `background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; opacity: ${opaklik}; transition: 0.3s;`;
+                     div.innerHTML = `
+                         <div style="flex-grow: 1;">
+                             <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                                 <strong style="color:var(--primary); text-transform:capitalize;"><i class="fas fa-user-circle"></i> ${msg.kullaniciAdi}</strong>
+                                 <small style="color:var(--text-muted); margin-right:15px;">${tarih}</small>
+                             </div>
+                             <div style="color:var(--text-main); font-style:italic; padding-left:10px; border-left:3px solid var(--accent);">"${msg.mesaj}"</div>
+                         </div>
+                         <div style="display:flex; gap:10px; align-items:center;">
+                             <button onclick="durumDegistir('${msg._id}')" style="background:transparent; border:none; cursor:pointer; color:${renk}; font-size:1.5rem;" title="Okundu/Okunmadı"><i class="fas ${ikon}"></i></button>
+                             <button onclick="feedbackSil('${msg._id}')" style="background:rgba(239,68,68,0.2); border:none; cursor:pointer; color:var(--danger); padding:8px; border-radius:50%; transition:0.2s;" title="Kalıcı Olarak Sil"><i class="fas fa-trash-alt"></i></button>
+                         </div>
+                     `;
+                     listeDiv.appendChild(div);
+                 });
+             } catch (error) { console.error(error); }
         }
-
-        // --- OKUNDU DURUMUNU DEĞİŞTİR ---
         async function durumDegistir(id) {
-            try {
-                const response = await fetch('/admin/toggle-feedback/' + id, { method: 'PUT' });
-                const data = await response.json();
-                if (data.success) feedbacksGetir();
-            } catch (error) { console.error("Hata:", error); }
+            try { const response = await fetch('/admin/toggle-feedback/' + id, { method: 'PUT' }); const data = await response.json(); if (data.success) feedbacksGetir(); } catch (error) { console.error("Hata:", error); }
         }
-
-        // --- SİLME FONKSİYONU (YENİ) ---
+        // --- FEEDBACK SİL ---
         async function feedbackSil(id) {
-            if(!confirm("Bu mesajı kalıcı olarak silmek istiyor musunuz?")) return;
-
-            try {
-                const response = await fetch('/admin/delete-feedback/' + id, { method: 'DELETE' });
-                const data = await response.json();
-                
-                if (data.success) {
-                    feedbacksGetir(); // Listeyi yenile
-                } else {
-                    alert("Hata: " + data.message);
-                }
-            } catch (error) { 
-                alert("Bağlantı hatası."); 
-            }
+            showConfirm("Bu mesajı silmek istediğinize emin misiniz?", async function() {
+                try {
+                    const response = await fetch('/admin/delete-feedback/' + id, { method: 'DELETE' });
+                    const data = await response.json();
+                    if (data.success) {
+                        showToast("Mesaj silindi.", "success");
+                        feedbacksGetir();
+                    } else {
+                        showToast(data.message, "error");
+                    }
+                } catch (error) { showToast("Bağlantı hatası.", "error"); }
+            });
         }
     </script>
 </body>

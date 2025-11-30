@@ -174,6 +174,42 @@ app.post('/admin/add-case', upload.single('vakaResmi'), async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, message: "Hata oluştu." }); }
 });
 
+// --- VAKA DETAY GETİR (ADMİN İÇİN - DÜZENLEME MODU) ---
+app.get('/admin/case/:no', async (req, res) => {
+    try {
+        // Normal /cases rotası gizli tanıyı vermez, bu yüzden admin için özel rota açtık
+        const vaka = await VakaModel.findOne({ vakaNo: req.params.no });
+        if(vaka) res.json({ success: true, vaka });
+        else res.status(404).json({ success: false, message: "Vaka bulunamadı." });
+    } catch (error) { res.status(500).json({ error: "Hata oluştu." }); }
+});
+
+// --- VAKA GÜNCELLEME (UPDATE) ---
+app.put('/admin/update-case/:no', upload.single('vakaResmi'), async (req, res) => {
+    const { baslik, yas, cinsiyet, gizliTani, icerik, zorluk } = req.body;
+    const resimYolu = req.file ? '/uploads/' + req.file.filename : undefined;
+
+    try {
+        // Sadece değişen verileri hazırlayalım
+        const guncellenecekVeri = { baslik, yas, cinsiyet, gizliTani, icerik, zorluk };
+        
+        // Eğer yeni resim yüklendiyse onu da güncelle, yüklenmediyse eskisini koru
+        if (resimYolu) guncellenecekVeri.resimUrl = resimYolu;
+
+        const updatedVaka = await VakaModel.findOneAndUpdate(
+            { vakaNo: req.params.no },
+            guncellenecekVeri,
+            { new: true } // Güncellenmiş halini döndür
+        );
+
+        if (updatedVaka) res.json({ success: true, message: "Vaka başarıyla güncellendi!" });
+        else res.status(404).json({ success: false, message: "Vaka bulunamadı." });
+
+    } catch (error) { 
+        res.status(500).json({ success: false, message: "Güncelleme hatası." }); 
+    }
+});
+
 app.delete('/admin/delete-case/:no', async (req, res) => {
     try {
         const silinen = await VakaModel.findOneAndDelete({ vakaNo: req.params.no });
