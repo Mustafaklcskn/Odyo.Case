@@ -478,3 +478,66 @@ input, textarea {
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes popIn { to { transform: scale(1); } }
+
+/* =========================================
+   12. YENİLİKLER POP-UP (NEWS MODAL)
+   ========================================= */
+.news-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 10001; /* En üstte olsun */
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(8px);
+    animation: fadeIn 0.5s ease-out;
+}
+
+.news-box {
+    background: linear-gradient(145deg, #1e293b, #0f172a);
+    padding: 40px;
+    border-radius: 20px;
+    max-width: 550px; width: 90%;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 50px rgba(59, 130, 246, 0.2);
+    position: relative;
+    overflow: hidden;
+    transform: scale(0.95);
+    animation: popIn 0.3s forwards;
+}
+
+/* Hafif Arkaplan Efekti */
+.news-box::before {
+    content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+    background: radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 60%);
+    animation: rotate 20s linear infinite; z-index: 0;
+}
+
+.news-inner { position: relative; z-index: 1; }
+
+.news-inner h2 {
+    color: var(--primary); font-size: 2rem; margin: 10px 0 25px 0;
+    text-transform: uppercase; letter-spacing: 1px; font-weight: 800;
+}
+
+.news-list {
+    text-align: left; padding: 0; list-style: none; margin-bottom: 35px;
+}
+
+.news-list li {
+    margin-bottom: 15px; color: #cbd5e1; font-size: 1.05rem;
+    display: flex; align-items: flex-start; gap: 12px;
+    background: rgba(255,255,255,0.03); padding: 10px; border-radius: 8px;
+}
+
+.news-list li i { color: var(--secondary); font-size: 1.2rem; margin-top: 3px; }
+
+.btn-news-close {
+    background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+    color: white; border: none; padding: 14px 40px;
+    border-radius: 50px; font-weight: bold; font-size: 1.1rem;
+    cursor: pointer; transition: 0.3s;
+    box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+}
+.btn-news-close:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(59, 130, 246, 0.5); }
+
+@keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

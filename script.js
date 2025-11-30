@@ -304,4 +304,39 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
+    // --- AKILLI YENİLİKLER MODALI (OTOMATİK KONTROL) ---
+    async function yenilikKontrol() {
+        const newsModal = document.getElementById('yeniliklerModal');
+        if(!newsModal) return;
+
+        try {
+            // 1. Sunucudan güncel versiyonu öğren
+            const res = await fetch('/check-version');
+            const data = await res.json();
+            const sunucuVersiyonu = data.version;
+
+            // 2. Tarayıcıda kayıtlı versiyonu öğren
+            const yerelVersiyon = localStorage.getItem('site_version_key');
+
+            // 3. Eğer versiyonlar farklıysa Pop-up'ı göster
+            if (sunucuVersiyon !== yerelVersiyon) {
+                setTimeout(() => {
+                    newsModal.style.display = 'flex';
+                }, 1500); // 1.5 sn sonra havalı bir giriş yapsın
+            }
+
+            // 4. Kapatma butonuna basınca yeni versiyonu kaydet
+            window.yenilikleriKapat = function() {
+                newsModal.style.display = 'none';
+                localStorage.setItem('site_version_key', sunucuVersiyonu);
+            };
+
+        } catch (err) {
+            console.log("Versiyon kontrol hatası (Önemsiz):", err);
+        }
+    }
+
+    // Fonksiyonu çalıştır
+    yenilikKontrol();
+
 });
