@@ -9,8 +9,27 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
+    
     <nav class="navbar">
-        <h2><i class="fas fa-ear-listen" style="margin-right:10px;"></i>OdyoCase</h2>
+        <a href="/" style="display: flex; align-items: center; text-decoration: none; gap: 0;">
+            
+            <svg width="34" height="34" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: -1px;">
+                <circle cx="25" cy="25" r="20" stroke="url(#gradO)" stroke-width="7" />
+                <path d="M18 22V28" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                <path d="M25 17V33" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                <path d="M32 22V28" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                <defs>
+                    <linearGradient id="gradO" x1="0" y1="0" x2="50" y2="50" gradientUnits="userSpaceOnUse">
+                        <stop stop-color="#3b82f6"/><stop offset="1" stop-color="#1e40af"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+
+            <span style="font-size: 1.6rem; font-weight: 700; color: #fff; letter-spacing: -0.5px; line-height: 1;">
+                dyo<span style="color: #3b82f6;">Case</span>
+            </span>
+        </a>
+
         <div>
             <a id="admin-btn" href="/admin.html" style="display:none;"><i class="fas fa-screwdriver-wrench"></i> Admin</a>
             <a href="/profil.html" class="nav-profil"><i class="fas fa-user-circle"></i> Profilim</a>
@@ -18,12 +37,10 @@
         </div>
     </nav>
 
-    <div id="sayac-kutusu" style="position:fixed; top:90px; right:30px; padding:10px 20px; border-radius:50px; font-weight:bold; font-size:1.5rem; display:none; z-index:999;">
-        ⏳ <span id="zaman">05:00</span>
-    </div>
-
     <div class="container">
+        
         <div id="liste-ekrani">
+            
             <div class="leaderboard-panel card">
                 <h2><i class="fas fa-trophy" style="color:var(--accent)"></i> Zirvedekiler (Top 5)</h2>
                 <div style="overflow-x: auto;">
@@ -35,19 +52,20 @@
                     </table>
                 </div>
             </div>
+
             <h3 style="color:var(--text-main); margin: 30px 0 20px 0; font-size: 1.4rem;">
                 <i class="fas fa-folder-open" style="color:var(--primary)"></i> Çözülmeyi Bekleyen Vakalar
             </h3>
+            
             <div id="vaka-listesi"><p>Vakalar yükleniyor...</p></div>
         
-            <!-- YENİ: ANA SAYFA GERİ BİLDİRİM KUTUSU -->
             <div class="card" style="margin-top: 30px; border-left: 5px solid var(--accent); background: rgba(245, 158, 11, 0.1);">
                 <h3 style="margin-top:0; color:var(--text-main); display:flex; align-items:center; gap:10px; font-size:1.2rem;">
                     <i class="fas fa-bullhorn" style="color:var(--accent);"></i> Bize Fikrini Söyle
                 </h3>
                 <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:15px;">
                     Sistemde bir hata mı var? Veya yeni bir özellik mi istiyorsun? Buradan yazabilirsin.
-                </button>
+                </p>
                 
                 <textarea id="feedback-mesaj" rows="2" placeholder="Mesajınız..." style="background: rgba(0,0,0,0.2); border:1px solid var(--border-color); color:white; width:100%; box-sizing:border-box;"></textarea>
                 
@@ -61,13 +79,22 @@
         </div>
 
         <div id="detay-ekrani" style="display: none;">
+            
             <button onclick="listeyeDon()" class="btn-back-list"><i class="fas fa-arrow-left"></i> Listeye Dön</button>
+            
+            <div class="vaka-header-row">
+                <div style="flex: 1;">
+                    <h2 id="detay-baslik" style="margin:0; font-size:1.8rem; color:var(--primary);">Vaka Yükleniyor...</h2>
+                    <span id="detay-zorluk" class="zorluk-etiketi">--</span>
+                </div>
+                
+                <div id="sayac-kutusu">
+                    ⏳ <span id="zaman">00:00</span>
+                </div>
+            </div>
+
             <div style="text-align: center;">
                 <img id="detay-resim" src="" style="width: 100%; max-height: 400px; object-fit: contain; margin-bottom: 25px; border-radius:12px; display: none;">
-            </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap:10px; margin-bottom:10px;">
-                <h2 id="detay-baslik" style="margin:0; font-size:1.8rem; color:var(--primary);">Vaka Başlığı</h2>
-                <span id="detay-zorluk" class="zorluk-etiketi">Zorluk</span>
             </div>
 
             <div style="background: rgba(59, 130, 246, 0.1); padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid var(--primary); display: flex; gap: 30px; align-items: center;">
@@ -81,20 +108,23 @@
                     <div id="detay-cinsiyet" style="font-weight:bold; font-size:1.2rem; color:var(--text-main);">--</div>
                 </div>
             </div>
+
             <div class="card" style="background: rgba(0,0,0,0.2); border:none;">
-                <p id="detay-icerik" style="font-size: 1.1rem; color: #e2e8f0;"></p>
+                <p id="detay-icerik" style="font-size: 1.1rem; color: #e2e8f0; line-height: 1.8;"></p>
             </div>
             
             <hr style="margin: 30px 0; border: 0; border-top: 1px solid var(--border-color);">
             
             <h3 style="margin-bottom:15px; color:var(--text-main);"><i class="fas fa-user-md"></i> Klinik Değerlendirmeniz</h3>
+            
             <textarea id="rapor-alani" rows="8" placeholder="LÜTFEN DETAYLI YAZIN:
 1. Olası Tanınız nedir?
 2. Hangi testleri uygulamayı düşünüyorsunuz?
 3. Beklenen bulgular nelerdir?"></textarea>
             
             <button id="gonder-butonu"><i class="fas fa-paper-plane"></i> Analiz İçin Gönder</button>
-            <p id="sonuc-mesaji"></p>
+            
+            <p id="sonuc-mesaji" style="margin-top: 20px;"></p>
         </div>
     </div>
 
@@ -112,26 +142,50 @@
                             Artık analizleriniz için "İdeal Uzman Yaklaşımı" içeren çok daha detaylı geri bildirimler alacaksınız.
                         </div>
                     </li>
-                    <li>
-                        <i class="fas fa-folder-plus"></i>
-                        <div>
-                            <strong style="color:white;">Yeni Vakalar Eklendi:</strong><br>
-                            Sistemdeki vaka havuzu genişletildi. Hemen incelemeye başla!
-                        </div>
-                    </li>
-                    <li>
-                        <i class="fas fa-magic"></i>
-                        <div>
-                            <strong style="color:white;">Arayüz Güncellendi:</strong><br>
-                            Kullanıcı deneyimi iyileştirildi ve yeni animasyonlar eklendi.
-                        </div>
-                    </li>
-                </ul>
+                    </ul>
 
                 <button onclick="yenilikleriKapat()" class="btn-news-close">Harika, Başlayalım!</button>
             </div>
         </div>
     </div>
+    
+    <div id="baslangicModal" class="confirm-overlay" style="display:none;">
+        <div class="confirm-box" style="max-width: 500px; text-align: left;">
+            
+            <div style="text-align:center; margin-bottom:20px;">
+                <div style="width:80px; height:80px; background:rgba(59,130,246,0.1); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto;">
+                    <i class="fas fa-play" style="font-size:2.5rem; color:var(--primary); margin-left:5px;"></i>
+                </div>
+            </div>
+
+            <h2 style="color:white; text-align:center; margin-top:0; margin-bottom:5px;">Vakayı İncelemeye Hazır mısın?</h2>
+            <p style="text-align:center; color:#94a3b8; margin-bottom:25px; font-size:0.9rem;">Süre başladığında detayları göreceksin.</p>
+            
+            <div style="background:rgba(255,255,255,0.05); padding:20px; border-radius:12px; margin-bottom:25px; color:#e2e8f0; font-size:0.95rem; border:1px solid rgba(255,255,255,0.1);">
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+                    <i class="fas fa-stopwatch" style="color:var(--accent); font-size:1.2rem; width:25px;"></i> 
+                    <span>Bu vaka için süren: <strong id="modal-sure-bilgisi" style="color:var(--accent);">--</strong> dakika.</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+                    <i class="fas fa-search" style="color:var(--primary); font-size:1.2rem; width:25px;"></i> 
+                    <span>Hikayeyi oku, bulguları incele.</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <i class="fas fa-file-medical" style="color:var(--secondary); font-size:1.2rem; width:25px;"></i> 
+                    <span>Tanı ve tedavi planını raporla.</span>
+                </div>
+            </div>
+
+            <button id="btn-vaka-baslat" class="btn-confirm-yes" style="width:100%; padding:15px; font-size:1.1rem; background:linear-gradient(135deg, var(--primary), var(--primary-hover)); box-shadow:0 10px 20px rgba(59, 130, 246, 0.3);">
+                <i class="fas fa-rocket"></i> Başla
+            </button>
+            
+            <button onclick="baslangicIptal()" style="background:transparent; border:none; color:#64748b; width:100%; margin-top:15px; cursor:pointer; font-weight:600; transition:0.3s;">
+                Vazgeç ve Listeye Dön
+            </button>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>

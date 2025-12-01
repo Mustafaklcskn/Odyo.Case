@@ -82,25 +82,36 @@ const RaporSchema = new mongoose.Schema({
 });
 const RaporModel = mongoose.models.Rapor || mongoose.model("Rapor", RaporSchema);
 
-// --- YENİ: AYARLAR ŞEMASI (Versiyon Kontrolü İçin) ---
+// --- AYARLAR ŞEMASI ---
 const SettingSchema = new mongoose.Schema({
     key: { type: String, required: true, unique: true },
     value: { type: String, required: true }
 });
 const SettingModel = mongoose.models.Setting || mongoose.model("Setting", SettingSchema);
 
-// --- YARDIMCI FONKSİYON: SÜRÜM GÜNCELLE ---
-// Her vaka eklendiğinde/güncellendiğinde bu çalışacak
-async function triggerSiteUpdate() {
+// --- YARDIMCI FONKSİYON: SÜRÜM VE MESAJ GÜNCELLE ---
+async function triggerSiteUpdate(mesaj) {
     try {
-        const yeniVersiyon = "v_" + Date.now(); // Örn: v_171542345
+        const yeniVersiyon = "v_" + Date.now();
+        
+        // 1. Versiyonu Güncelle
         await SettingModel.findOneAndUpdate(
             { key: "site_version" },
             { value: yeniVersiyon },
             { upsert: true, new: true }
         );
-        console.log("🔔 Site versiyonu güncellendi:", yeniVersiyon);
-    } catch (e) { console.error("Versiyon güncellenemedi", e); }
+
+        // 2. Mesajı Güncelle
+        const updateMsg = mesaj || "Sistem güncellemeleri yapıldı.";
+        
+        await SettingModel.findOneAndUpdate(
+            { key: "update_message" },
+            { value: updateMsg },
+            { upsert: true, new: true }
+        );
+
+        console.log("🔔 Site güncellendi:", updateMsg);
+    } catch (e) { console.error("Güncelleme hatası", e); }
 }
 
 // 6. GÜVENLİK
@@ -121,12 +132,16 @@ app.get('/register.html', (req, res) => res.sendFile(path.join(__dirname, 'regis
 app.get('/profil.html', (req, res) => res.sendFile(path.join(__dirname, 'profil.html')));
 app.get('/admin.html', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 
-// --- YENİ: VERSİYON KONTROL ROTASI ---
+// --- VERSİYON KONTROL ---
 app.get('/check-version', async (req, res) => {
     try {
-        const setting = await SettingModel.findOne({ key: "site_version" });
-        // Eğer veritabanında henüz kayıt yoksa varsayılan bir değer dön
-        res.json({ version: setting ? setting.value : "v_baslangic" });
+        const vSetting = await SettingModel.findOne({ key: "site_version" });
+        const mSetting = await SettingModel.findOne({ key: "update_message" });
+        
+        res.json({ 
+            version: vSetting ? vSetting.value : "v_baslangic",
+            message: mSetting ? mSetting.value : "Yeni içerikler eklendi!" 
+        });
     } catch (error) { res.status(500).json({ error: "Hata" }); }
 });
 
@@ -157,7 +172,6 @@ app.post('/login', async (req, res) => {
 
 // --- VAKA İŞLEMLERİ ---
 
-// Ekleme
 app.post('/admin/add-case', upload.single('vakaResmi'), async (req, res) => {
     const resimYolu = req.file ? '/uploads/' + req.file.filename : null;
     const { baslik, yas, cinsiyet, gizliTani, icerik, zorluk } = req.body;
@@ -168,25 +182,23 @@ app.post('/admin/add-case', upload.single('vakaResmi'), async (req, res) => {
         const yeniVaka = new VakaModel({ vakaNo: yeniVakaNo, baslik, yas, cinsiyet, gizliTani, icerik, zorluk, resimUrl: resimYolu });
         await yeniVaka.save();
         
-        await triggerSiteUpdate(); // <--- YENİLİK TETİKLEYİCİSİ
+        await triggerSiteUpdate(`🆕 Yeni Vaka Eklendi: ${baslik}`);
         
         res.json({ success: true, message: `Vaka ${yeniVakaNo} eklendi!` });
     } catch (error) { res.status(500).json({ success: false, message: "Hata oluştu." }); }
 });
 
-// Silme
 app.delete('/admin/delete-case/:no', async (req, res) => {
     try {
         const silinen = await VakaModel.findOneAndDelete({ vakaNo: req.params.no });
         if (silinen) {
-            await triggerSiteUpdate(); // <--- YENİLİK TETİKLEYİCİSİ
+            await triggerSiteUpdate(`🗑️ Vaka #${req.params.no} silindi.`);
             res.json({ success: true, message: "Silindi." });
         }
         else res.status(404).json({ success: false, message: "Bulunamadı." });
     } catch (error) { res.status(500).json({ success: false, message: "Hata." }); }
 });
 
-// Listeleme
 app.get('/cases', async (req, res) => {
     try {
         const vakalar = await VakaModel.find().select('-gizliTani');
@@ -194,7 +206,6 @@ app.get('/cases', async (req, res) => {
     } catch (error) { res.status(500).json({ error: "Hata." }); }
 });
 
-// Detay Getirme (Admin - Düzenleme)
 app.get('/admin/case/:no', async (req, res) => {
     try {
         const vaka = await VakaModel.findOne({ vakaNo: req.params.no });
@@ -203,7 +214,6 @@ app.get('/admin/case/:no', async (req, res) => {
     } catch (error) { res.status(500).json({ error: "Hata oluştu." }); }
 });
 
-// Güncelleme
 app.put('/admin/update-case/:no', upload.single('vakaResmi'), async (req, res) => {
     const { baslik, yas, cinsiyet, gizliTani, icerik, zorluk } = req.body;
     const resimYolu = req.file ? '/uploads/' + req.file.filename : undefined;
@@ -213,7 +223,7 @@ app.put('/admin/update-case/:no', upload.single('vakaResmi'), async (req, res) =
         const updatedVaka = await VakaModel.findOneAndUpdate({ vakaNo: req.params.no }, guncellenecekVeri, { new: true });
         
         if (updatedVaka) {
-            await triggerSiteUpdate(); // <--- YENİLİK TETİKLEYİCİSİ
+            await triggerSiteUpdate(`✏️ Vaka #${req.params.no} güncellendi: ${baslik}`);
             res.json({ success: true, message: "Vaka güncellendi!" });
         }
         else res.status(404).json({ success: false, message: "Bulunamadı." });
@@ -222,7 +232,7 @@ app.put('/admin/update-case/:no', upload.single('vakaResmi'), async (req, res) =
 
 // --- RAPOR & FEEDBACK ---
 app.post('/submit-report', verifyToken, async (req, res) => {
-    const { rapor, vakaID } = req.body;
+    const { rapor, vakaID, kalanSure } = req.body;
     const raporuGonderen = req.user.username;
     try {
         const eskiRapor = await RaporModel.findOne({ kullaniciAdi: raporuGonderen, vakaID: vakaID });
@@ -253,15 +263,48 @@ app.post('/submit-report', verifyToken, async (req, res) => {
             if (jsonBas !== -1 && jsonSon !== -1) aiResult = JSON.parse(text.substring(jsonBas, jsonSon + 1));
         } catch (e) { console.error("JSON Hatası"); }
 
+        // PUANLAMA MANTIĞI
         let carpan = 1;
         if (vaka.zorluk === 'Orta') carpan = 1.25;
         if (vaka.zorluk === 'Zor') carpan = 1.5;
-        let finalPuan = Math.round(aiResult.puan * carpan);
+        
+        let hamPuan = Math.round(aiResult.puan * carpan);
 
-        const yeniRapor = new RaporModel({ raporMetni: rapor, alinanPuan: finalPuan, aiYorumu: aiResult.yorum, aiDogruCevap: aiResult.idealCevap, kullaniciAdi: raporuGonderen, vakaID: vakaID });
-        await yeniRapor.save();
-        res.json({ success: true, message: aiResult.yorum, puan: finalPuan, dogruCevap: aiResult.idealCevap });
-    } catch (error) { res.status(500).json({ success: false, message: "Sunucu hatası." }); }
+        // HIZ BONUSU
+        let hizBonusu = 0;
+        if (kalanSure > 0) {
+            hizBonusu = Math.floor(kalanSure / 30) * 5;
+            if(hizBonusu > 20) hizBonusu = 20; 
+        }
+
+        let finalPuan = hamPuan + hizBonusu;
+        if (finalPuan > 100) finalPuan = 100;
+
+        let bonusMesaj = hizBonusu > 0 ? ` (Hız Bonusu: +${hizBonusu} puan)` : "";
+
+        // EKSİK OLAN KISIMLAR BURASIYDI:
+        const yeniRapor = new RaporModel({
+            raporMetni: rapor,
+            alinanPuan: finalPuan,
+            aiYorumu: aiResult.yorum + bonusMesaj,
+            aiDogruCevap: aiResult.idealCevap,
+            kullaniciAdi: raporuGonderen,
+            vakaID: vakaID
+        });
+        
+        await yeniRapor.save(); // Kaydetmeyi unutmuştuk
+        
+        res.json({ 
+            success: true, 
+            message: aiResult.yorum + bonusMesaj, 
+            puan: finalPuan, 
+            dogruCevap: aiResult.idealCevap 
+        }); // Cevap dönmeyi unutmuştuk
+
+    } catch (error) { 
+        console.error("Rapor Hatası:", error);
+        res.status(500).json({ success: false, message: "Sunucu hatası." }); 
+    }
 });
 
 app.get('/leaderboard', async (req, res) => {

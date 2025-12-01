@@ -1,6 +1,45 @@
 document.addEventListener("DOMContentLoaded", function() {
     
-    // --- YENİ BİLDİRİM FONKSİYONU ---
+    // 1. GİRİŞ KONTROLÜ
+    const token = localStorage.getItem('token');
+    const isAdmin = localStorage.getItem('isAdmin');
+    const username = localStorage.getItem('username');
+
+    if (!token) { window.location.href = '/login.html'; return; }
+    
+    if (isAdmin === "true") {
+        const adminBtn = document.getElementById('admin-btn');
+        if(adminBtn) adminBtn.style.display = "inline-flex";
+    }
+
+    // 2. ELEMENTLER VE DEĞİŞKENLER
+    const listeEkrani = document.getElementById('liste-ekrani');
+    const detayEkrani = document.getElementById('detay-ekrani');
+    const vakaListesiDiv = document.getElementById('vaka-listesi');
+    const liderlikBody = document.getElementById('liderlik-body');
+    
+    // Detay Elemanları
+    const detayBaslik = document.getElementById('detay-baslik');
+    const detayIcerik = document.getElementById('detay-icerik');
+    const detayZorluk = document.getElementById('detay-zorluk');
+    const detayResim = document.getElementById('detay-resim');
+    const detayYas = document.getElementById('detay-yas');
+    const detayCinsiyet = document.getElementById('detay-cinsiyet');
+
+    // İşlem Elemanları
+    const gonderButonu = document.getElementById('gonder-butonu');
+    const raporAlani = document.getElementById('rapor-alani');
+    const sonucMesaji = document.getElementById('sonuc-mesaji');
+    const sayacKutusu = document.getElementById('sayac-kutusu');
+    const zamanGosterge = document.getElementById('zaman');
+
+    let seciliVakaID = null;
+    let sayacInterval = null;
+    let cozulmusVakalar = []; 
+    let globalKalanSure = 0;
+    let bekleyenSure = 0;
+
+    // 3. TOAST BİLDİRİM SİSTEMİ
     window.showToast = function(mesaj, tip = 'info') {
         let container = document.getElementById('toast-container');
         if (!container) {
@@ -15,63 +54,68 @@ document.addEventListener("DOMContentLoaded", function() {
             'warning': 'fa-exclamation-triangle',
             'info': 'fa-info-circle'
         };
-        const renkMap = {
-            'success': '#10b981', // Yeşil
-            'error': '#ef4444',   // Kırmızı
-            'warning': '#f59e0b', // Turuncu
-            'info': '#3b82f6'     // Mavi
-        };
-
+        
         const toast = document.createElement('div');
         toast.className = `toast toast-${tip}`;
         toast.innerHTML = `
-            <i class="fas ${iconMap[tip]}" style="color:${renkMap[tip]}"></i>
+            <i class="fas ${iconMap[tip]}"></i>
             <span>${mesaj}</span>
         `;
 
         container.appendChild(toast);
-
-        // 3 saniye sonra DOM'dan sil
         setTimeout(() => { toast.remove(); }, 3000);
     };
 
-    // 1. GİRİŞ KONTROLÜ
-    const token = localStorage.getItem('token');
-    const isAdmin = localStorage.getItem('isAdmin');
-    if (!token) { window.location.href = '/login.html'; return; }
-    if (isAdmin === "true") {
-        const adminBtn = document.getElementById('admin-btn');
-        if(adminBtn) adminBtn.style.display = "inline-flex";
-    }
+    // 4. ÖZEL ONAY PENCERESİ (CONFIRM)
+    window.showConfirm = function(mesaj, callback) {
+        const eski = document.querySelector('.confirm-overlay');
+        if(eski) eski.remove();
 
-    // 2. ELEMENTLER
-    const listeEkrani = document.getElementById('liste-ekrani');
-    const detayEkrani = document.getElementById('detay-ekrani');
-    const vakaListesiDiv = document.getElementById('vaka-listesi');
-    const liderlikBody = document.getElementById('liderlik-body');
-    const detayBaslik = document.getElementById('detay-baslik');
-    const detayIcerik = document.getElementById('detay-icerik');
-    const detayZorluk = document.getElementById('detay-zorluk');
-    const detayResim = document.getElementById('detay-resim');
-    
-    // YENİ EKLENENLER
-    const detayYas = document.getElementById('detay-yas');
-    const detayCinsiyet = document.getElementById('detay-cinsiyet');
+        const overlay = document.createElement('div');
+        overlay.className = 'confirm-overlay';
+        overlay.innerHTML = `
+            <div class="confirm-box">
+                <i class="fas fa-question-circle" style="font-size:3rem; color:#f59e0b; margin-bottom:15px; display:block;"></i>
+                <h3 style="margin:0 0 10px 0; color:white;">Emin misiniz?</h3>
+                <p style="color:#94a3b8; margin:0;">${mesaj}</p>
+                <div class="confirm-buttons">
+                    <button class="btn-confirm-no" id="btn-iptal">Vazgeç</button>
+                    <button class="btn-confirm-yes" id="btn-onayla">Evet, Yap</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
 
-    const gonderButonu = document.getElementById('gonder-butonu');
-    const raporAlani = document.getElementById('rapor-alani');
-    const sonucMesaji = document.getElementById('sonuc-mesaji');
-    const sayacKutusu = document.getElementById('sayac-kutusu');
-    const zamanGosterge = document.getElementById('zaman');
+        document.getElementById('btn-iptal').onclick = () => overlay.remove();
+        document.getElementById('btn-onayla').onclick = () => {
+            overlay.remove();
+            callback();
+        };
+    };
 
-    let seciliVakaID = null;
-    let sayacInterval = null;
-    let cozulmusVakalar = []; 
+    // 5. ÇIKIŞ FONKSİYONU
+    window.cikisYap = function() {
+        showConfirm("Hesabınızdan çıkış yapılacak.", function() {
+            localStorage.clear();
+            window.location.href = '/login.html';
+        });
+    };
 
-    // 3. VERİ ÇEKME
+    // 6. VERİLERİ GETİR (Vakalar & Raporlar)
     async function verileriHazirla() {
         try {
+            // Raporları çekerken token kontrolü de yapmış oluyoruz
             const resRapor = await fetch('/my-reports', { headers: { 'Authorization': token } });
+            
+            // --- GÜVENLİK KONTROLÜ BAŞLANGICI ---
+            if (resRapor.status === 401 || resRapor.status === 403) {
+                // Eğer sunucu "Yetkisiz" (401) veya "Yasaklı" (403) derse:
+                localStorage.clear(); // Hatalı token'ı sil
+                window.location.href = '/login.html'; // Girişe at
+                return; // İşlemi durdur
+            }
+            // --- GÜVENLİK KONTROLÜ BİTİŞİ ---
+
             if(resRapor.ok) {
                 const raporlar = await resRapor.json();
                 cozulmusVakalar = raporlar.map(r => r.vakaID);
@@ -106,10 +150,15 @@ document.addEventListener("DOMContentLoaded", function() {
                 kart.onclick = () => vakaSec(vaka);
                 vakaListesiDiv.appendChild(kart);
             });
-        } catch (error) { console.error("Veri hatası:", error); }
+        } catch (error) { 
+            console.error("Veri hatası:", error);
+            // İstersen burada da genel bir hata durumunda yönlendirme yapabilirsin ama 
+            // yukarıdaki 401 kontrolü en kritik olanıdır.
+        }
     }
     verileriHazirla();
 
+    // Liderlik Tablosu
     fetch('/leaderboard').then(res => res.json()).then(data => {
         if(liderlikBody) {
             liderlikBody.innerHTML = "";
@@ -126,60 +175,130 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 
-    // 4. VAKA DETAY
+    // 7. VAKA DETAY VE SAYAÇ SİSTEMİ
     const vakaSec = (vaka) => {
         seciliVakaID = vaka.vakaNo;
         if(!detayEkrani || !listeEkrani) return;
 
-        if(detayResim) {
-            if (vaka.resimUrl) { detayResim.src = vaka.resimUrl; detayResim.style.display = 'block'; } 
-            else { detayResim.style.display = 'none'; }
-        }
+        // Verileri Doldur (Resim, Başlık, İçerik vb.)
+        if (vaka.resimUrl) { detayResim.src = vaka.resimUrl; detayResim.style.display = 'block'; } 
+        else { detayResim.style.display = 'none'; }
 
-        if(detayBaslik) detayBaslik.innerText = `Vaka ${vaka.vakaNo}: ${vaka.baslik}`;
-        if(detayIcerik) detayIcerik.innerText = vaka.icerik;
-        if(detayZorluk) { detayZorluk.innerText = vaka.zorluk; detayZorluk.className = `zorluk-etiketi zorluk-${vaka.zorluk}`; }
-        
-        // YENİ: Yaş ve Cinsiyet
-        if(detayYas) detayYas.innerText = vaka.yas || "-";
-        if(detayCinsiyet) detayCinsiyet.innerText = vaka.cinsiyet || "-";
+        detayBaslik.innerText = `Vaka ${vaka.vakaNo}: ${vaka.baslik}`;
+        detayIcerik.innerText = vaka.icerik;
+        detayZorluk.innerText = vaka.zorluk; 
+        detayZorluk.className = `zorluk-etiketi zorluk-${vaka.zorluk}`;
+        detayYas.innerText = vaka.yas || "-";
+        detayCinsiyet.innerText = vaka.cinsiyet || "-";
 
+        // Ekran Değişimi
         listeEkrani.style.display = 'none';
         detayEkrani.style.display = 'block';
-        if(raporAlani) raporAlani.value = "";
-        if(sonucMesaji) sonucMesaji.innerText = "";
+        raporAlani.value = "";
+        sonucMesaji.innerHTML = "";
         
+        // SAYAÇ KUTUSUNU BAŞLANGIÇTA GİZLE (Pop-up'tan sonra açılacak)
+        if(sayacKutusu) sayacKutusu.style.display = "none";
+
+        // Vaka zaten çözülmüş mü?
         if (cozulmusVakalar.includes(vaka.vakaNo)) {
-            if(gonderButonu) { gonderButonu.disabled = true; gonderButonu.innerHTML = '<i class="fas fa-check"></i> Tamamlandı'; gonderButonu.style.background = "#475569"; gonderButonu.style.cursor = "not-allowed"; }
-            if(raporAlani) { raporAlani.disabled = true; raporAlani.placeholder = "Bu vaka tamamlandı."; }
-            if(sayacKutusu) sayacKutusu.style.display = "none";
+            gonderButonu.disabled = true; 
+            gonderButonu.innerHTML = '<i class="fas fa-check"></i> Tamamlandı'; 
+            gonderButonu.style.background = "#475569"; 
+            gonderButonu.style.cursor = "not-allowed";
+            raporAlani.disabled = true; 
+            raporAlani.placeholder = "Bu vaka daha önce tamamlandı.";
             if(sayacInterval) clearInterval(sayacInterval);
         } else {
-            if(gonderButonu) { gonderButonu.disabled = false; gonderButonu.innerHTML = '<i class="fas fa-paper-plane"></i> Analiz İçin Gönder'; gonderButonu.style.background = "linear-gradient(135deg, var(--primary), var(--primary-hover))"; gonderButonu.style.cursor = "pointer"; }
-            if(raporAlani) { raporAlani.disabled = false; raporAlani.placeholder = "LÜTFEN DETAYLI YAZIN:\n1. Olası Tanı\n2. İstenen Testler\n3. Beklenen Bulgular"; }
-            baslatSayac(300);
+            // Çözülmemişse Hazırlık Yap
+            gonderButonu.disabled = false; 
+            gonderButonu.innerHTML = '<i class="fas fa-paper-plane"></i> Analiz İçin Gönder'; 
+            gonderButonu.style.background = "linear-gradient(135deg, var(--primary), var(--primary-hover))"; 
+            gonderButonu.style.cursor = "pointer";
+            raporAlani.disabled = false; 
+            raporAlani.placeholder = "LÜTFEN DETAYLI YAZIN:\n1. Olası Tanı\n2. İstenen Testler\n3. Beklenen Bulgular";
+            
+            // SÜREYİ HESAPLA AMA BAŞLATMA
+            let sure = 300; 
+            if(vaka.zorluk === 'Kolay') sure = 180;
+            if(vaka.zorluk === 'Zor') sure = 600;
+            
+            // --- BURASI DEĞİŞTİ: Direkt başlatmak yerine Modal Açıyoruz ---
+            acBaslangicModal(sure);
         }
+    };
+
+    function acBaslangicModal(saniye) {
+        const modal = document.getElementById('baslangicModal');
+        const sureBilgi = document.getElementById('modal-sure-bilgisi');
+        
+        // Saniyeyi dakikaya çevirip ekrana yaz
+        let dk = Math.floor(saniye / 60);
+        if(sureBilgi) sureBilgi.innerText = dk;
+        
+        // Süreyi hafızaya al
+        bekleyenSure = saniye;
+        
+        // Modalı Göster
+        modal.style.display = 'flex';
+        
+        // Arka planı (detay ekranını) bulanıklaştır ki kopya çekilmesin :)
+        if(detayEkrani) detayEkrani.style.filter = "blur(10px)";
+    }
+
+    // Başla Butonuna Tıklanınca
+    const btnBaslat = document.getElementById('btn-vaka-baslat');
+    if(btnBaslat) {
+        btnBaslat.onclick = function() {
+            document.getElementById('baslangicModal').style.display = 'none';
+            if(detayEkrani) detayEkrani.style.filter = "none"; // Bulanıklığı kaldır
+            
+            // Sayacı Şimdi Başlat
+            baslatSayac(bekleyenSure);
+        };
+    }
+
+    // Vazgeç Butonu
+    window.baslangicIptal = function() {
+        document.getElementById('baslangicModal').style.display = 'none';
+        if(detayEkrani) detayEkrani.style.filter = "none";
+        listeyeDon();
     };
 
     const baslatSayac = (saniye) => {
         if(sayacInterval) clearInterval(sayacInterval);
-        if(sayacKutusu) sayacKutusu.style.display = "block";
+        
+        sayacKutusu.style.display = "flex";
+        sayacKutusu.className = ""; // Renkleri sıfırla
+        
         let kalan = saniye;
+        globalKalanSure = saniye;
         guncelleZaman(kalan);
+
         sayacInterval = setInterval(() => {
-            kalan--; guncelleZaman(kalan);
+            kalan--;
+            globalKalanSure = kalan;
+            guncelleZaman(kalan);
+
+            // Görsel Efektler
+            if(kalan < 60) sayacKutusu.classList.add('timer-warning');
+            if(kalan < 30) {
+                sayacKutusu.classList.remove('timer-warning');
+                sayacKutusu.classList.add('timer-danger');
+            }
+
             if (kalan < 0) {
                 clearInterval(sayacInterval);
-                if(zamanGosterge) zamanGosterge.innerText = "00:00";
-                alert("Süre Doldu!");
-                if(gonderButonu) { gonderButonu.disabled = true; gonderButonu.style.background = "#475569"; gonderButonu.innerText = "Süre Doldu"; }
-                if(raporAlani) raporAlani.disabled = true;
+                zamanGosterge.innerText = "00:00";
+                showToast("Süre Doldu!", "error");
+                gonderButonu.disabled = true; 
+                gonderButonu.innerHTML = "Süre Bitti";
+                raporAlani.disabled = true;
             }
         }, 1000);
     };
 
     const guncelleZaman = (sn) => {
-        if(!zamanGosterge) return;
         let dk = Math.floor(sn / 60);
         let saniye = sn % 60;
         if(dk < 10) dk = "0" + dk;
@@ -187,156 +306,159 @@ document.addEventListener("DOMContentLoaded", function() {
         zamanGosterge.innerText = `${dk}:${saniye}`;
     };
 
+    // 8. RAPOR GÖNDERME
     if(gonderButonu) {
         gonderButonu.addEventListener("click", function() {
             const yazilanRapor = raporAlani.value;
-            if(!yazilanRapor.trim()) { alert("Lütfen rapor yazın!"); return; }
-            sonucMesaji.innerText = "Analiz ediliyor...";
-            sonucMesaji.style.color = "var(--primary)";
+            if(!yazilanRapor.trim()) { showToast("Lütfen bir rapor yazınız.", "warning"); return; }
+            
+            sonucMesaji.innerHTML = "<span style='color:var(--primary)'>Analiz ediliyor...</span>";
             gonderButonu.disabled = true;
-            fetch('/submit-report', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': token }, body: JSON.stringify({ rapor: yazilanRapor, vakaID: seciliVakaID }) })
+
+            fetch('/submit-report', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json', 'Authorization': token }, 
+                body: JSON.stringify({ 
+                    rapor: yazilanRapor, 
+                    vakaID: seciliVakaID,
+                    kalanSure: globalKalanSure
+                }) 
+            })
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    // --- BURASI GÜNCELLENDİ: HTML KUTULARI EKLENDİ ---
+                    showToast("Analiz Tamamlandı!", "success");
+                    
                     sonucMesaji.innerHTML = `
                         <div style="margin-bottom:15px; text-align:center;">
                             <span style="font-size:1.8rem; color:var(--secondary); font-weight:800;">PUAN: ${data.puan}</span>
                         </div>
-                        
-                        <!-- AI Yorumu Kutusu -->
                         <div style="background:rgba(59, 130, 246, 0.1); padding:15px; border-radius:10px; border-left:4px solid var(--primary); margin-bottom:15px; text-align:left;">
                             <strong style="display:block; color:var(--primary); margin-bottom:5px; font-size:0.9rem; text-transform:uppercase;">AI Hoca Yorumu:</strong>
                             <span style="color:#e2e8f0;">${data.message}</span>
                         </div>
-
-                        <!-- İdeal Cevap Kutusu -->
                         <div style="background:rgba(16, 185, 129, 0.1); padding:15px; border-radius:10px; border-left:4px solid var(--secondary); text-align:left;">
                             <strong style="display:block; color:var(--secondary); margin-bottom:5px; font-size:0.9rem; text-transform:uppercase;">✅ İdeal Uzman Yaklaşımı:</strong>
                             <span style="font-style:italic; color:#cbd5e1; font-size:0.95rem;">${data.dogruCevap || "Cevap oluşturulamadı."}</span>
                         </div>
                     `;
-                    // ----------------------------------------------------
-
-                    sonucMesaji.style.color = "inherit"; // Rengi CSS yönetsin
                     
                     if(sayacInterval) clearInterval(sayacInterval);
                     cozulmusVakalar.push(seciliVakaID);
-                    
                     gonderButonu.innerHTML = '<i class="fas fa-check"></i> Tamamlandı';
                     gonderButonu.style.background = "#475569";
-                    gonderButonu.style.cursor = "not-allowed";
                     raporAlani.disabled = true;
-
                 } else {
-                    // HATA DURUMU
-                    sonucMesaji.innerHTML = `<span style="color:var(--danger); font-weight:bold;">${data.message}</span>`;
+                    showToast(data.message, "error");
+                    sonucMesaji.innerHTML = `<span style="color:var(--danger)">${data.message}</span>`;
                     gonderButonu.disabled = false;
                 }
-            }).catch(err => { sonucMesaji.innerText = "Hata oluştu."; gonderButonu.disabled = false; });
+            }).catch(err => { 
+                showToast("Sunucu hatası oluştu.", "error"); 
+                gonderButonu.disabled = false; 
+            });
         });
     }
 
     window.listeyeDon = function() {
-        if(listeEkrani) listeEkrani.style.display = 'block';
-        if(detayEkrani) detayEkrani.style.display = 'none';
-        if(sayacKutusu) sayacKutusu.style.display = 'none';
+        listeEkrani.style.display = 'block';
+        detayEkrani.style.display = 'none';
         if(sayacInterval) clearInterval(sayacInterval);
         verileriHazirla(); 
     };
 
-    // --- ÖZEL ONAY PENCERESİ FONKSİYONU ---
-    window.showConfirm = function(mesaj, callback) {
-        // Varsa eskileri temizle
-        const eski = document.querySelector('.confirm-overlay');
-        if(eski) eski.remove();
-
-        const overlay = document.createElement('div');
-        overlay.className = 'confirm-overlay';
-        overlay.innerHTML = `
-            <div class="confirm-box">
-                <i class="fas fa-question-circle" style="font-size:3rem; color:#f59e0b; margin-bottom:15px; display:block;"></i>
-                <h3 style="margin:0 0 10px 0; color:white;">Emin misiniz?</h3>
-                <p style="color:#94a3b8; margin:0;">${mesaj}</p>
-                <div class="confirm-buttons">
-                    <button class="btn-confirm-no" id="btn-iptal">Vazgeç</button>
-                    <button class="btn-confirm-yes" id="btn-onayla">Evet, Yap</button>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(overlay);
-
-        // Buton Olayları
-        document.getElementById('btn-iptal').onclick = () => overlay.remove();
-        document.getElementById('btn-onayla').onclick = () => {
-            overlay.remove();
-            callback(); // İşlemi gerçekleştir
-        };
-    };
-
-    // --- ÇIKIŞ YAP (GÜNCELLENDİ) ---
-    window.cikisYap = function() {
-        showConfirm("Hesabınızdan çıkış yapılacak.", function() {
-            localStorage.clear();
-            window.location.href = '/login.html';
-        });
-    };
-
-// --- GÜVENLİK KORUMALARI ---
-
-// 1. Sağ Tıklamayı Engelle
-document.addEventListener('contextmenu', function(e) {
-    e.preventDefault();
-});
-
-// 2. Kopyalama ve Geliştirici Araçları Kısayollarını Engelle
-document.addEventListener('keydown', function(e) {
-    // Ctrl+C (Kopyala), Ctrl+X (Kes), Ctrl+U (Kaynak Kod), F12 (Geliştirici)
-    if (
-        (e.ctrlKey && (e.key === 'c' || e.key === 'C')) || 
-        (e.ctrlKey && (e.key === 'x' || e.key === 'X')) || 
-        (e.ctrlKey && (e.key === 'u' || e.key === 'U')) || 
-        e.key === 'F12'
-    ) {
-        e.preventDefault();
-        // İstersen caydırıcı bir uyarı da gösterebilirsin:
-        // alert("Sınav güvenliği nedeniyle kopyalama yapmak yasaktır!");
-    }
-});
-
-    // --- AKILLI YENİLİKLER MODALI (OTOMATİK KONTROL) ---
+    // --- AKILLI YENİLİKLER MODALI (DÜZELTİLMİŞ) ---
     async function yenilikKontrol() {
         const newsModal = document.getElementById('yeniliklerModal');
         if(!newsModal) return;
 
+        // Kullanıcı yoksa çık (Ama yukarıda kontrol ettik, yine de güvenli olsun)
+        if (!username) return;
+
+        const storageKey = `site_version_key_${username}`;
+
         try {
-            // 1. Sunucudan güncel versiyonu öğren
-            const res = await fetch('/check-version');
+            // ÖNEMLİ: URL sonuna ?t=... ekleyerek tarayıcı önbelleğini aşıyoruz (Cache Busting)
+            const res = await fetch('/check-version?t=' + Date.now());
             const data = await res.json();
             const sunucuVersiyonu = data.version;
+            const sunucuMesaji = data.message;
 
-            // 2. Tarayıcıda kayıtlı versiyonu öğren
-            const yerelVersiyon = localStorage.getItem('site_version_key');
+            const yerelVersiyon = localStorage.getItem(storageKey);
 
-            // 3. Eğer versiyonlar farklıysa Pop-up'ı göster
+            console.log(`Versiyon Kontrol - Kullanıcı: ${username}`);
+            console.log(`Sunucu: ${sunucuVersiyon}, Yerel: ${yerelVersiyon}`);
+
             if (sunucuVersiyon !== yerelVersiyon) {
-                setTimeout(() => {
-                    newsModal.style.display = 'flex';
-                }, 1500); // 1.5 sn sonra havalı bir giriş yapsın
+                console.log("Farklı versiyon! Pop-up açılıyor...");
+                
+                const liste = newsModal.querySelector('.news-list');
+                if(liste && sunucuMesaji) {
+                    // Mevcut listenin başına son mesajı ekle
+                    liste.innerHTML = `
+                        <li style="background:rgba(59,130,246,0.1); border-left:3px solid var(--primary);">
+                            <i class="fas fa-bell" style="color:var(--primary);"></i>
+                            <div>
+                                <strong style="color:white;">📢 Son Gelişme:</strong><br>
+                                ${sunucuMesaji}
+                            </div>
+                        </li>
+                        ${liste.innerHTML}
+                    `;
+                }
+
+                setTimeout(() => { newsModal.style.display = 'flex'; }, 1000);
+            } else {
+                console.log("Versiyonlar aynı, pop-up açılmayacak.");
             }
 
-            // 4. Kapatma butonuna basınca yeni versiyonu kaydet
             window.yenilikleriKapat = function() {
                 newsModal.style.display = 'none';
-                localStorage.setItem('site_version_key', sunucuVersiyonu);
+                localStorage.setItem(storageKey, sunucuVersiyonu);
             };
 
         } catch (err) {
-            console.log("Versiyon kontrol hatası (Önemsiz):", err);
+            console.log("Versiyon kontrol hatası:", err);
         }
     }
 
-    // Fonksiyonu çalıştır
+    // Çalıştır
     yenilikKontrol();
+
+    // Feedback Gönderimi
+    const feedbackBtn = document.getElementById('feedback-btn');
+    if(feedbackBtn) {
+        feedbackBtn.addEventListener('click', async () => {
+            const kutu = document.getElementById('feedback-mesaj');
+            const sonuc = document.getElementById('feedback-sonuc');
+            if(!kutu.value.trim()) { showToast("Boş mesaj gönderilemez.", "warning"); return; }
+            
+            sonuc.innerText = "Gönderiliyor...";
+            try {
+                const res = await fetch('/submit-feedback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': token },
+                    body: JSON.stringify({ mesaj: kutu.value })
+                });
+                const data = await res.json();
+                if(data.success) {
+                    showToast("Mesajınız iletildi, teşekkürler!", "success");
+                    kutu.value = "";
+                    sonuc.innerText = "";
+                } else {
+                    showToast("Hata: " + data.message, "error");
+                    sonuc.innerText = "";
+                }
+            } catch(e) { showToast("Bağlantı hatası.", "error"); sonuc.innerText = ""; }
+        });
+    }
+
+    // Güvenlik: Sağ Tık ve Kopyalama Engeli
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('keydown', e => {
+        if ((e.ctrlKey && ['c', 'x', 'u', 'C', 'X', 'U'].includes(e.key)) || e.key === 'F12') {
+            e.preventDefault();
+        }
+    });
 
 });

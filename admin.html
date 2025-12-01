@@ -16,8 +16,30 @@
 </head>
 <body>
     <nav class="navbar">
-        <h2><i class="fas fa-user-shield" style="color:var(--accent);"></i> Yönetim Paneli</h2>
-        <a href="/" class="btn-back-list" style="margin:0; border:none; color:white; background:rgba(255,255,255,0.1);"><i class="fas fa-home"></i> Siteye Dön</a>
+        <a href="/" style="display: flex; align-items: center; text-decoration: none; gap: 0;">
+            
+            <svg width="34" height="34" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: -1px;">
+                <circle cx="25" cy="25" r="20" stroke="url(#gradO)" stroke-width="7" />
+                <path d="M18 22V28" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                <path d="M25 17V33" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                <path d="M32 22V28" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                <defs>
+                    <linearGradient id="gradO" x1="0" y1="0" x2="50" y2="50" gradientUnits="userSpaceOnUse">
+                        <stop stop-color="#3b82f6"/><stop offset="1" stop-color="#1e40af"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+
+            <span style="font-size: 1.6rem; font-weight: 700; color: #fff; letter-spacing: -0.5px; line-height: 1;">
+                dyo<span style="color: #3b82f6;">Case</span>
+            </span>
+        </a>
+
+        <div>
+            <a id="admin-btn" href="/admin.html" style="display:none;"><i class="fas fa-screwdriver-wrench"></i> Admin</a>
+            <a href="/profil.html" class="nav-profil"><i class="fas fa-user-circle"></i> Profilim</a>
+            <button onclick="cikisYap()" class="nav-cikis"><i class="fas fa-sign-out-alt"></i> Çıkış</button>
+        </div>
     </nav>
 
     <div class="container">

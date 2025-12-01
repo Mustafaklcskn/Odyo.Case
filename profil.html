@@ -10,26 +10,26 @@
     <style>
         /* MODAL (POP-UP PENCERE) STİLLERİ */
         .modal {
-            display: none; /* Başlangıçta gizli */
+            display: none; 
             position: fixed; 
             z-index: 1000; 
             left: 0; top: 0;
             width: 100%; height: 100%; 
-            background-color: rgba(0,0,0,0.8); /* Karartılmış arka plan */
+            background-color: rgba(0,0,0,0.8); 
             backdrop-filter: blur(5px);
             align-items: center; justify-content: center;
         }
 
         .modal-content {
-            background: #1e293b; /* Koyu Lacivert */
+            background: #1e293b; 
             padding: 30px;
             border-radius: 16px;
-            width: 90%; max-width: 700px; /* Genişlik */
+            width: 90%; max-width: 700px;
             border: 1px solid rgba(255,255,255,0.1);
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
             position: relative;
             color: #f1f5f9;
-            max-height: 85vh; /* Çok uzunsa kaydırma çubuğu çıksın */
+            max-height: 85vh; 
             overflow-y: auto;
         }
 
@@ -62,17 +62,34 @@
 </head>
 <body>
 
-    <!-- NAVBAR -->
     <nav class="navbar">
-        <h2><i class="fas fa-ear-listen"></i> OdyoCase</h2>
-        <a href="/" class="btn-back-list" style="margin:0; border:none; color:white;">
-            <i class="fas fa-arrow-left"></i> Ana Sayfaya Dön
+        <a href="/" style="display: flex; align-items: center; text-decoration: none; gap: 0;">
+            <svg width="34" height="34" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: -1px;">
+                <circle cx="25" cy="25" r="20" stroke="url(#gradO)" stroke-width="7" />
+                <path d="M18 22V28" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                <path d="M25 17V33" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                <path d="M32 22V28" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                <defs>
+                    <linearGradient id="gradO" x1="0" y1="0" x2="50" y2="50" gradientUnits="userSpaceOnUse">
+                        <stop stop-color="#3b82f6"/><stop offset="1" stop-color="#1e40af"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+            <span style="font-size: 1.6rem; font-weight: 700; color: #fff; letter-spacing: -0.5px; line-height: 1;">
+                dyo<span style="color: #3b82f6;">Case</span>
+            </span>
         </a>
+
+        <div>
+            <a href="/" class="nav-profil" style="background:rgba(255,255,255,0.1); color:white; border:1px solid rgba(255,255,255,0.2);">
+                <i class="fas fa-home"></i> Ana Sayfa
+            </a>
+            <button onclick="cikisYap()" class="nav-cikis"><i class="fas fa-sign-out-alt"></i> Çıkış</button>
+        </div>
     </nav>
 
     <div class="container">
         
-        <!-- ÜST BİLGİ KARTI -->
         <div class="card">
             <div class="profile-header">
                 <div class="profile-avatar"><i class="fas fa-user-graduate"></i></div>
@@ -87,7 +104,6 @@
                 </div>
             </div>
 
-            <!-- İSTATİSTİK GRID -->
             <div class="dashboard-grid">
                 <div class="stat-card">
                     <div class="stat-icon icon-blue"><i class="fas fa-folder-open"></i></div>
@@ -104,7 +120,6 @@
             </div>
         </div>
 
-        <!-- GEÇMİŞ TABLOSU -->
         <div class="card leaderboard-panel">
             <h2 style="display:flex; align-items:center; gap:10px;">
                 <i class="fas fa-history" style="color:var(--text-muted);"></i> Rapor Geçmişi
@@ -126,7 +141,6 @@
         </div>
     </div>
 
-    <!-- MODAL (POP-UP PENCERE) - EKSİKSİZ YAPI -->
     <div id="detayModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="modalKapat()">&times;</span>
@@ -134,19 +148,15 @@
                 📄 Rapor ve Analiz Detayı
             </h2>
             
-            <!-- 1. SİZİN RAPORUNUZ -->
             <span class="modal-label"><i class="fas fa-pen-nib"></i> Sizin Klinik Yorumunuz:</span>
             <div id="modal-rapor" class="modal-text">...</div>
 
-            <!-- 2. AI HOCA YORUMU (Burası Eksikti, Şimdi Eklendi) -->
             <span class="modal-label"><i class="fas fa-chalkboard-teacher"></i> AI Hoca Geri Bildirimi:</span>
             <div id="modal-yorum" class="modal-text" style="border-left: 3px solid var(--accent);">...</div>
 
-            <!-- 3. İDEAL CEVAP (YENİ) -->
             <span class="modal-label" style="color:var(--secondary);"><i class="fas fa-check-circle"></i> İdeal Uzman Yaklaşımı:</span>
             <div id="modal-ideal" class="modal-text" style="border-left: 3px solid var(--secondary); background:rgba(16, 185, 129, 0.05); color:#e2e8f0;">...</div>
 
-            <!-- 4. PUAN -->
             <div style="text-align: right; margin-top:20px; border-top:1px solid rgba(255,255,255,0.1); padding-top:15px;">
                 <span class="modal-label" style="display:inline; margin:0; color:var(--text-muted);">Alınan Puan:</span>
                 <span id="modal-puan" class="badge badge-high" style="font-size:1.4rem; margin-left:10px;">0</span>
@@ -201,7 +211,6 @@
                             <td style="font-weight:bold; color:var(--primary);">#${rapor.vakaID}</td>
                             <td><span class="badge ${renk}">${rapor.alinanPuan}</span></td>
                             <td style="text-align: right;">
-                                <!-- JSON verisini güvenli şekilde fonksiyona gönderiyoruz -->
                                 <button onclick='modalAc(${JSON.stringify(rapor).replace(/'/g, "&#39;")})' 
                                         style="background:var(--primary); color:white; border:none; padding:6px 15px; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.85rem; transition:0.2s;">
                                     <i class="fas fa-eye"></i> İncele
@@ -212,7 +221,6 @@
                     tablo.innerHTML += satir;
                 });
 
-                // İstatistikleri Yaz
                 const vakaSayisi = raporlar.length;
                 const ortalama = Math.round(toplamPuan / vakaSayisi);
                 toplamVakaEl.innerText = vakaSayisi;
@@ -237,43 +245,65 @@
         // --- MODAL FONKSİYONLARI ---
         function modalAc(rapor) {
             const modal = document.getElementById('detayModal');
+            document.getElementById('modal-yorum').innerText = rapor.aiYorumu || "Yorum bulunamadı.";
+            document.getElementById('modal-rapor').innerText = rapor.raporMetni || "-";
+            document.getElementById('modal-puan').innerText = rapor.alinanPuan;
             
-            // Verileri Kutulara Doldur
-            const yorumAlani = document.getElementById('modal-yorum');
             const idealAlani = document.getElementById('modal-ideal');
-            const raporAlani = document.getElementById('modal-rapor');
-            const puanAlani = document.getElementById('modal-puan');
-
-            if(raporAlani) raporAlani.innerText = rapor.raporMetni || "-";
-            if(yorumAlani) yorumAlani.innerText = rapor.aiYorumu || "Yorum bulunamadı.";
-            if(puanAlani) puanAlani.innerText = rapor.alinanPuan;
-            
-            // İdeal Cevap Kontrolü
             if(idealAlani) {
                 if(rapor.aiDogruCevap) {
                     idealAlani.innerText = rapor.aiDogruCevap;
                     idealAlani.style.display = "block";
-                    // Başlığını da gösterelim (bir önceki sibling element label'dır)
                     idealAlani.previousElementSibling.style.display = "block";
                 } else {
                     idealAlani.style.display = "none";
-                    idealAlani.previousElementSibling.style.display = "none"; // Başlığı da gizle
+                    idealAlani.previousElementSibling.style.display = "none";
                 }
             }
-            
-            modal.style.display = "flex"; // Göster
+            modal.style.display = "flex"; 
         }
 
         function modalKapat() {
             document.getElementById('detayModal').style.display = "none";
         }
 
-        // Dışarı tıklayınca kapat
         window.onclick = function(event) {
             const modal = document.getElementById('detayModal');
-            if (event.target == modal) {
-                modal.style.display = "none";
-            }
+            if (event.target == modal) modal.style.display = "none";
+        }
+
+        // --- ÇIKIŞ VE ONAY İŞLEMLERİ (Buraya Eklendi) ---
+        function showConfirm(mesaj, callback) {
+            const eski = document.querySelector('.confirm-overlay');
+            if(eski) eski.remove();
+
+            const overlay = document.createElement('div');
+            overlay.className = 'confirm-overlay';
+            overlay.innerHTML = `
+                <div class="confirm-box">
+                    <i class="fas fa-question-circle" style="font-size:3rem; color:#f59e0b; margin-bottom:15px; display:block;"></i>
+                    <h3 style="margin:0 0 10px 0; color:white;">Emin misiniz?</h3>
+                    <p style="color:#94a3b8; margin:0;">${mesaj}</p>
+                    <div class="confirm-buttons">
+                        <button class="btn-confirm-no" id="btn-iptal">Vazgeç</button>
+                        <button class="btn-confirm-yes" id="btn-onayla">Evet, Yap</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+
+            document.getElementById('btn-iptal').onclick = () => overlay.remove();
+            document.getElementById('btn-onayla').onclick = () => {
+                overlay.remove();
+                callback();
+            };
+        }
+
+        function cikisYap() {
+            showConfirm("Hesabınızdan çıkış yapılacak.", function() {
+                localStorage.clear();
+                window.location.href = '/login.html';
+            });
         }
     </script>
 </body>
