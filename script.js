@@ -369,6 +369,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // --- AKILLI YENİLİKLER MODALI (DÜZELTİLMİŞ) ---
     // --- SÜPER DEBUG YENİLİK KONTROLÜ ---
+    // --- SÜPER DEBUG YENİLİK KONTROLÜ (DÜZELTİLDİ) ---
     async function yenilikKontrol() {
         const newsModal = document.getElementById('yeniliklerModal');
         if(!newsModal) return;
@@ -382,23 +383,23 @@ document.addEventListener("DOMContentLoaded", function() {
             // Sunucuya istek atıyoruz
             const res = await fetch('/check-version?t=' + Date.now());
             
-            // Cevabı önce METİN olarak alalım (Patlamayı önlemek için)
+            // Cevabı önce METİN olarak alalım
             const gelenCevap = await res.text();
             
-            // Eğer gelen cevap "{" ile başlamıyorsa, bu bir JSON değil HTML'dir!
+            // Eğer gelen cevap JSON değilse (HTML ise) hata ver
             if (!gelenCevap.trim().startsWith("{")) {
-                alert("HATA: Sunucu güncel değil!\n\nİstek: /check-version\nGelen Cevap:\n" + gelenCevap.substring(0, 150) + "...");
                 console.log("SUNUCUDAN GELEN HATALI CEVAP:", gelenCevap);
                 return;
             }
 
             // JSON'a çevir
             const data = JSON.parse(gelenCevap);
-            const sunucuVersiyonu = data.version;
+            const sunucuVersiyonu = data.version; // Değişken adı: sunucuVersiyonu
             const sunucuMesaji = data.message;
             const yerelVersiyon = localStorage.getItem(storageKey);
 
-            if (sunucuVersiyon !== yerelVersiyon) {
+            // KARŞILAŞTIRMA (HATA BURADAYDI, DÜZELDİ)
+            if (sunucuVersiyonu !== yerelVersiyon) {
                 const liste = newsModal.querySelector('.news-list');
                 if(liste && sunucuMesaji) {
                     liste.innerHTML = `
@@ -420,7 +421,7 @@ document.addEventListener("DOMContentLoaded", function() {
             };
 
         } catch (err) {
-            alert("BİLİNMEYEN HATA:\n" + err);
+            console.error("Yenilik kontrol hatası:", err);
         }
     }
     
