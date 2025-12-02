@@ -368,32 +368,35 @@ document.addEventListener("DOMContentLoaded", function() {
     };
 
     // --- AKILLI YENİLİKLER MODALI (DÜZELTİLMİŞ) ---
+    // --- SÜPER DEBUG YENİLİK KONTROLÜ ---
     async function yenilikKontrol() {
         const newsModal = document.getElementById('yeniliklerModal');
-        // KONTROL 1: HTML Var mı?
-        if(!newsModal) { alert("HATA 1: Pop-up HTML kutusu sayfada bulunamadı!"); return; }
+        if(!newsModal) return;
 
         const aktifKullanici = localStorage.getItem('username');
-        // KONTROL 2: Kullanıcı var mı?
-        if (!aktifKullanici) { 
-            // alert("BİLGİ: Kullanıcı girişi yapılmamış, pop-up çalışmaz."); 
-            return; 
-        }
+        if (!aktifKullanici) return;
 
         const storageKey = `site_version_key_${aktifKullanici}`;
 
         try {
-            // KONTROL 3: Sunucuya Erişiliyor mu?
+            // Sunucuya istek atıyoruz
             const res = await fetch('/check-version?t=' + Date.now());
-            if(!res.ok) { alert("HATA 3: Sunucu /check-version rotasına cevap vermedi! (Server.js güncel değil)"); return; }
             
-            const data = await res.json();
+            // Cevabı önce METİN olarak alalım (Patlamayı önlemek için)
+            const gelenCevap = await res.text();
+            
+            // Eğer gelen cevap "{" ile başlamıyorsa, bu bir JSON değil HTML'dir!
+            if (!gelenCevap.trim().startsWith("{")) {
+                alert("HATA: Sunucu güncel değil!\n\nİstek: /check-version\nGelen Cevap:\n" + gelenCevap.substring(0, 150) + "...");
+                console.log("SUNUCUDAN GELEN HATALI CEVAP:", gelenCevap);
+                return;
+            }
+
+            // JSON'a çevir
+            const data = JSON.parse(gelenCevap);
             const sunucuVersiyonu = data.version;
             const sunucuMesaji = data.message;
             const yerelVersiyon = localStorage.getItem(storageKey);
-
-            // KONTROL 4: Versiyonlar Ne?
-            // alert(`DEBUG:\nSunucu: ${sunucuVersiyon}\nYerel: ${yerelVersiyon}\nKullanıcı: ${aktifKullanici}`);
 
             if (sunucuVersiyon !== yerelVersiyon) {
                 const liste = newsModal.querySelector('.news-list');
@@ -408,8 +411,8 @@ document.addEventListener("DOMContentLoaded", function() {
                         </li>
                     `;
                 }
-                newsModal.style.display = 'flex'; // GÖSTER
-            } 
+                newsModal.style.display = 'flex';
+            }
 
             window.yenilikleriKapat = function() {
                 newsModal.style.display = 'none';
@@ -417,7 +420,7 @@ document.addEventListener("DOMContentLoaded", function() {
             };
 
         } catch (err) {
-            alert("HATA 5: Kodda bir patlama oldu:\n" + err);
+            alert("BİLİNMEYEN HATA:\n" + err);
         }
     }
     
