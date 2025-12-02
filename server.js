@@ -41,8 +41,9 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MongoDB Bağlandı.'))
   .catch((err) => console.error('❌ MongoDB Hatası:', err));
 
-// 5. ŞEMALAR
+// ================= 5. ŞEMALAR =================
 
+// KULLANICI ŞEMASI
 const UserSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true },
     password: { type: String, required: true },
@@ -51,6 +52,7 @@ const UserSchema = new mongoose.Schema({
 });
 const UserModel = mongoose.models.User || mongoose.model("User", UserSchema);
 
+// KLASİK VAKA ŞEMASI (MEVCUT SİSTEM)
 const VakaSchema = new mongoose.Schema({
     vakaNo: { type: Number, unique: true },
     baslik: { type: String, required: true },
@@ -63,6 +65,32 @@ const VakaSchema = new mongoose.Schema({
 });
 const VakaModel = mongoose.models.Vaka || mongoose.model("Vaka", VakaSchema);
 
+// --- YENİ: KLİNİK SİMÜLASYON ŞEMASI ---
+const SimulasyonSchema = new mongoose.Schema({
+    simNo: { type: Number, unique: true }, // Simülasyon ID'si (örn: 201, 202)
+    baslik: { type: String, required: true }, // Hasta Adı veya Vaka Başlığı
+    yas: { type: Number, required: true },
+    cinsiyet: { type: String, required: true },
+    sikayet: { type: String, required: true }, // Hastanın ilk geliş şikayeti (Görünen)
+    
+    // GİZLİ KLİNİK VERİLER (Öğrenci istedikçe açılacak)
+    anamnez: { type: String, default: "Ekstra bir bilgi vermedi." },
+    otoskopi: { type: String, default: "Zar doğal, buşon yok." },
+    safSes: { type: String, default: "Normal sınırlar içinde." },
+    timpanometri: { type: String, default: "Tip A" },
+    refleks: { type: String, default: "Alındı." },
+    konusma: { type: String, default: "SDS: %100" },
+    
+    // AI DEĞERLENDİRME KRİTERLERİ
+    gercekTani: { type: String, required: true },
+    gereksizTestler: { type: String }, // Yapılmaması gerekenler (Puan kırmak için)
+    
+    eklenmeTarihi: { type: Date, default: Date.now }
+});
+const SimulasyonModel = mongoose.models.Simulasyon || mongoose.model("Simulasyon", SimulasyonSchema);
+
+
+// DİĞER ŞEMALAR (FEEDBACK, RAPOR, AYARLAR)
 const FeedbackSchema = new mongoose.Schema({
     kullaniciAdi: { type: String, required: true },
     mesaj: { type: String, required: true },
@@ -72,44 +100,30 @@ const FeedbackSchema = new mongoose.Schema({
 const FeedbackModel = mongoose.models.Feedback || mongoose.model("Feedback", FeedbackSchema);
 
 const RaporSchema = new mongoose.Schema({
-    raporMetni: { type: String, required: true },
+    raporMetni: { type: String, required: true }, // Veya Simülasyon Tanısı
     alinanPuan: { type: Number, default: 0 },
     aiYorumu: { type: String },
     kullaniciAdi: { type: String },
     vakaID: { type: Number },
+    tip: { type: String, default: 'klasik' }, // 'klasik' veya 'simulasyon'
     olusturulmaTarihi: { type: Date, default: Date.now },
     aiDogruCevap: {type: String}
 });
 const RaporModel = mongoose.models.Rapor || mongoose.model("Rapor", RaporSchema);
 
-// --- AYARLAR ŞEMASI ---
 const SettingSchema = new mongoose.Schema({
     key: { type: String, required: true, unique: true },
     value: { type: String, required: true }
 });
 const SettingModel = mongoose.models.Setting || mongoose.model("Setting", SettingSchema);
 
-// --- YARDIMCI FONKSİYON: SÜRÜM VE MESAJ GÜNCELLE ---
+// --- YARDIMCI FONKSİYONLAR ---
 async function triggerSiteUpdate(mesaj) {
     try {
         const yeniVersiyon = "v_" + Date.now();
-        
-        // 1. Versiyonu Güncelle
-        await SettingModel.findOneAndUpdate(
-            { key: "site_version" },
-            { value: yeniVersiyon },
-            { upsert: true, new: true }
-        );
-
-        // 2. Mesajı Güncelle
-        const updateMsg = mesaj || "Sistem güncellemeleri yapıldı.";
-        
-        await SettingModel.findOneAndUpdate(
-            { key: "update_message" },
-            { value: updateMsg },
-            { upsert: true, new: true }
-        );
-
+        await SettingModel.findOneAndUpdate({ key: "site_version" }, { value: yeniVersiyon }, { upsert: true });
+        const updateMsg = mesaj || "Sistem güncellendi.";
+        await SettingModel.findOneAndUpdate({ key: "update_message" }, { value: updateMsg }, { upsert: true });
         console.log("🔔 Site güncellendi:", updateMsg);
     } catch (e) { console.error("Güncelleme hatası", e); }
 }
@@ -131,21 +145,18 @@ app.get('/login.html', (req, res) => res.sendFile(path.join(__dirname, 'login.ht
 app.get('/register.html', (req, res) => res.sendFile(path.join(__dirname, 'register.html')));
 app.get('/profil.html', (req, res) => res.sendFile(path.join(__dirname, 'profil.html')));
 app.get('/admin.html', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
+// Yeni Simülasyon Sayfası için route (Henüz oluşturmadık ama hazır olsun)
+app.get('/simulasyon.html', (req, res) => res.sendFile(path.join(__dirname, 'simulasyon.html'))); 
 
-// --- VERSİYON KONTROL ---
 app.get('/check-version', async (req, res) => {
     try {
         const vSetting = await SettingModel.findOne({ key: "site_version" });
         const mSetting = await SettingModel.findOne({ key: "update_message" });
-        
-        res.json({ 
-            version: vSetting ? vSetting.value : "v_baslangic",
-            message: mSetting ? mSetting.value : "Yeni içerikler eklendi!" 
-        });
+        res.json({ version: vSetting ? vSetting.value : "v_baslangic", message: mSetting ? mSetting.value : "Yeni içerikler!" });
     } catch (error) { res.status(500).json({ error: "Hata" }); }
 });
 
-// --- KAYIT & GİRİŞ ---
+// AUTH
 app.post('/register', async (req, res) => {
     const { username, password, phone, school } = req.body;
     try {
@@ -170,8 +181,7 @@ app.post('/login', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, message: "Sunucu hatası." }); }
 });
 
-// --- VAKA İŞLEMLERİ ---
-
+// --- KLASİK VAKA İŞLEMLERİ (MEVCUT) ---
 app.post('/admin/add-case', upload.single('vakaResmi'), async (req, res) => {
     const resimYolu = req.file ? '/uploads/' + req.file.filename : null;
     const { baslik, yas, cinsiyet, gizliTani, icerik, zorluk } = req.body;
@@ -181,9 +191,7 @@ app.post('/admin/add-case', upload.single('vakaResmi'), async (req, res) => {
         if (sonVaka) yeniVakaNo = sonVaka.vakaNo + 1;
         const yeniVaka = new VakaModel({ vakaNo: yeniVakaNo, baslik, yas, cinsiyet, gizliTani, icerik, zorluk, resimUrl: resimYolu });
         await yeniVaka.save();
-        
         await triggerSiteUpdate(`🆕 Yeni Vaka Eklendi: ${baslik}`);
-        
         res.json({ success: true, message: `Vaka ${yeniVakaNo} eklendi!` });
     } catch (error) { res.status(500).json({ success: false, message: "Hata oluştu." }); }
 });
@@ -194,168 +202,219 @@ app.delete('/admin/delete-case/:no', async (req, res) => {
         if (silinen) {
             await triggerSiteUpdate(`🗑️ Vaka #${req.params.no} silindi.`);
             res.json({ success: true, message: "Silindi." });
-        }
-        else res.status(404).json({ success: false, message: "Bulunamadı." });
+        } else res.status(404).json({ success: false, message: "Bulunamadı." });
     } catch (error) { res.status(500).json({ success: false, message: "Hata." }); }
 });
 
 app.get('/cases', async (req, res) => {
-    try {
-        const vakalar = await VakaModel.find().select('-gizliTani');
-        res.json(vakalar);
-    } catch (error) { res.status(500).json({ error: "Hata." }); }
+    try { const vakalar = await VakaModel.find().select('-gizliTani'); res.json(vakalar); } catch (error) { res.status(500).json({ error: "Hata." }); }
 });
 
 app.get('/admin/case/:no', async (req, res) => {
-    try {
-        const vaka = await VakaModel.findOne({ vakaNo: req.params.no });
-        if(vaka) res.json({ success: true, vaka });
-        else res.status(404).json({ success: false, message: "Vaka bulunamadı." });
-    } catch (error) { res.status(500).json({ error: "Hata oluştu." }); }
+    try { const vaka = await VakaModel.findOne({ vakaNo: req.params.no }); res.json({ success: true, vaka }); } catch (error) { res.status(500).json({ error: "Hata." }); }
 });
 
 app.put('/admin/update-case/:no', upload.single('vakaResmi'), async (req, res) => {
     const { baslik, yas, cinsiyet, gizliTani, icerik, zorluk } = req.body;
     const resimYolu = req.file ? '/uploads/' + req.file.filename : undefined;
     try {
-        const guncellenecekVeri = { baslik, yas, cinsiyet, gizliTani, icerik, zorluk };
-        if (resimYolu) guncellenecekVeri.resimUrl = resimYolu;
-        const updatedVaka = await VakaModel.findOneAndUpdate({ vakaNo: req.params.no }, guncellenecekVeri, { new: true });
-        
-        if (updatedVaka) {
-            await triggerSiteUpdate(`✏️ Vaka #${req.params.no} güncellendi: ${baslik}`);
-            res.json({ success: true, message: "Vaka güncellendi!" });
-        }
-        else res.status(404).json({ success: false, message: "Bulunamadı." });
-    } catch (error) { res.status(500).json({ success: false, message: "Hata." }); }
+        const veri = { baslik, yas, cinsiyet, gizliTani, icerik, zorluk };
+        if (resimYolu) veri.resimUrl = resimYolu;
+        const updated = await VakaModel.findOneAndUpdate({ vakaNo: req.params.no }, veri, { new: true });
+        if (updated) {
+            await triggerSiteUpdate(`✏️ Vaka #${req.params.no} güncellendi.`);
+            res.json({ success: true, message: "Güncellendi." });
+        } else res.status(404).json({ success: false });
+    } catch (error) { res.status(500).json({ success: false }); }
 });
 
-// --- RAPOR & FEEDBACK ---
-app.post('/submit-report', verifyToken, async (req, res) => {
-    const { rapor, vakaID, kalanSure } = req.body;
-    const raporuGonderen = req.user.username;
-    try {
-        const eskiRapor = await RaporModel.findOne({ kullaniciAdi: raporuGonderen, vakaID: vakaID });
-        if (eskiRapor) return res.json({ success: false, message: "Bu vakayı daha önce çözdünüz!" });
-        const vaka = await VakaModel.findOne({ vakaNo: vakaID });
-        if (!vaka) return res.status(404).json({ success: false, message: "Vaka bulunamadı!" });
+// --- YENİ: SİMÜLASYON İŞLEMLERİ ---
 
+// 1. Simülasyon Ekle (Admin)
+app.post('/admin/add-simulation', async (req, res) => {
+    // Burada body'den tüm klinik verileri alacağız
+    const { baslik, yas, cinsiyet, sikayet, gercekTani, gereksizTestler, anamnez, otoskopi, safSes, timpanometri, refleks, konusma } = req.body;
+    
+    try {
+        const sonSim = await SimulasyonModel.findOne().sort({ simNo: -1 });
+        let yeniSimNo = 201; // Simülasyonlar 201'den başlasın (Karışmasın diye)
+        if (sonSim) yeniSimNo = sonSim.simNo + 1;
+
+        const yeniSim = new SimulasyonModel({
+            simNo: yeniSimNo,
+            baslik, yas, cinsiyet, sikayet,
+            gercekTani, gereksizTestler,
+            anamnez, otoskopi, safSes, timpanometri, refleks, konusma
+        });
+
+        await yeniSim.save();
+        await triggerSiteUpdate(`🏥 Yeni Simülasyon Hastası Eklendi: ${baslik}`);
+        res.json({ success: true, message: `Simülasyon ${yeniSimNo} eklendi!` });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: "Hata oluştu." });
+    }
+});
+
+// 2. Simülasyonları Listele (Öğrenci/Admin)
+app.get('/simulations', async (req, res) => {
+    try {
+        // Öğrenciye gizli verileri (Tanı, Anamnez detayı vb.) gönderme!
+        const simler = await SimulasyonModel.find().select('simNo baslik yas cinsiyet sikayet zorluk'); 
+        res.json(simler);
+    } catch (error) { res.status(500).json({ error: "Hata." }); }
+});
+
+// 3. Tek Simülasyonu Getir (Oyun Başladığında)
+app.get('/simulation/:no', async (req, res) => {
+    try {
+        // Burada tüm veriyi dönüyoruz çünkü oyun içinde parça parça JS ile göstereceğiz.
+        // Güvenlik notu: İdealde her adım için ayrı istek atılır ama şimdilik "Frontend'de gizle" mantığıyla gidelim.
+        const sim = await SimulasyonModel.findOne({ simNo: req.params.no });
+        if(sim) res.json({ success: true, sim });
+        else res.status(404).json({ success: false, message: "Bulunamadı." });
+    } catch (error) { res.status(500).json({ error: "Hata." }); }
+});
+
+// 4. Simülasyonu Değerlendir (AI Yargıcı)
+app.post('/evaluate-simulation', verifyToken, async (req, res) => {
+    const { simNo, islemGecmisi, tani } = req.body;
+    const kullaniciAdi = req.user.username;
+
+    try {
+        const sim = await SimulasyonModel.findOne({ simNo: simNo });
+        if (!sim) return res.status(404).json({ success: false, message: "Simülasyon bulunamadı." });
+
+        // AI'ya Sor
         const prompt = `
-            Sen Odyoloji Profesörüsün. Öğrenci sınav kağıdını okuyorsun.
-            VAKA: ${vaka.baslik} (Yaş: ${vaka.yas}, Cinsiyet: ${vaka.cinsiyet})
-            HİKAYE: ${vaka.icerik}
-            GERÇEK TANI (Gizli): ${vaka.gizliTani}
-            ÖĞRENCİ RAPORU: "${rapor}"
-            ZORLUK: ${vaka.zorluk}
-            GÖREVLERİN:
-            1. Öğrenciye puan ver ve eksiklerini söyle (Yorum).
-            2. Bu vaka için "ALTIN STANDART" bir rapor yaz (IdealCevap).
-            ÇIKTI FORMATI (SADECE JSON):
-            { "puan": 0-100, "yorum": "...", "idealCevap": "..." }
+            Sen Odyoloji Hocasısın. Öğrenci bir hastayı muayene etti.
+            
+            HASTA BİLGİLERİ:
+            Tanı: ${sim.gercekTani}
+            Şikayet: ${sim.sikayet}
+            Gereksiz/Yasak Testler: ${sim.gereksizTestler}
+            
+            ÖĞRENCİNİN YAPTIĞI İŞLEMLER (Sırasıyla):
+            ${islemGecmisi.join(' -> ')}
+            
+            ÖĞRENCİNİN KOYDUĞU TANI:
+            "${tani}"
+
+            DEĞERLENDİRME KRİTERLERİ:
+            1. Sıralama Doğru mu? (Önce Anamnez ve Otoskopi yapılmalı).
+            2. Gereksiz test yapıldı mı? (Puan kır).
+            3. Tanı doğru mu? (En önemli puan buradan).
+            
+            CEVAP FORMATI (JSON):
+            { "puan": 0-100, "yorum": "Kısa ve eğitici geri bildirim.", "dogruYol": "İdeal işlem sırası..." }
         `;
+
         const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text();
-        let aiResult = { puan: 50, yorum: "Hata", idealCevap: "Oluşturulamadı." };
+        const text = result.response.text();
+        
+        let aiResult = { puan: 0, yorum: "Hata", dogruYol: "-" };
         try {
             const jsonBas = text.indexOf('{');
             const jsonSon = text.lastIndexOf('}');
             if (jsonBas !== -1 && jsonSon !== -1) aiResult = JSON.parse(text.substring(jsonBas, jsonSon + 1));
         } catch (e) { console.error("JSON Hatası"); }
 
-        // PUANLAMA MANTIĞI
-        let carpan = 1;
-        if (vaka.zorluk === 'Orta') carpan = 1.25;
-        if (vaka.zorluk === 'Zor') carpan = 1.5;
-        
-        let hamPuan = Math.round(aiResult.puan * carpan);
-
-        // HIZ BONUSU
-        let hizBonusu = 0;
-        if (kalanSure > 0) {
-            hizBonusu = Math.floor(kalanSure / 30) * 5;
-            if(hizBonusu > 20) hizBonusu = 20; 
-        }
-
-        let finalPuan = hamPuan + hizBonusu;
-        if (finalPuan > 100) finalPuan = 100;
-
-        let bonusMesaj = hizBonusu > 0 ? ` (Hız Bonusu: +${hizBonusu} puan)` : "";
-
-        // EKSİK OLAN KISIMLAR BURASIYDI:
+        // Raporu Kaydet (Tip: 'simulasyon')
         const yeniRapor = new RaporModel({
-            raporMetni: rapor,
-            alinanPuan: finalPuan,
-            aiYorumu: aiResult.yorum + bonusMesaj,
-            aiDogruCevap: aiResult.idealCevap,
-            kullaniciAdi: raporuGonderen,
-            vakaID: vakaID
+            raporMetni: `[SİMÜLASYON] Tanı: ${tani} | İşlemler: ${islemGecmisi.join(', ')}`,
+            alinanPuan: aiResult.puan,
+            aiYorumu: aiResult.yorum,
+            aiDogruCevap: aiResult.dogruYol,
+            kullaniciAdi: kullaniciAdi,
+            vakaID: simNo, // Simülasyon numarası
+            tip: 'simulasyon'
         });
-        
-        await yeniRapor.save(); // Kaydetmeyi unutmuştuk
-        
-        res.json({ 
-            success: true, 
-            message: aiResult.yorum + bonusMesaj, 
-            puan: finalPuan, 
-            dogruCevap: aiResult.idealCevap 
-        }); // Cevap dönmeyi unutmuştuk
+        await yeniRapor.save();
+
+        res.json({ success: true, result: aiResult });
 
     } catch (error) { 
-        console.error("Rapor Hatası:", error);
-        res.status(500).json({ success: false, message: "Sunucu hatası." }); 
+        console.error(error);
+        res.status(500).json({ success: false, message: "Hata." }); 
     }
+});
+
+
+// --- DİĞER ROTALAR (KLASİK) ---
+app.post('/submit-report', verifyToken, async (req, res) => {
+    const { rapor, vakaID, kalanSure } = req.body;
+    const raporuGonderen = req.user.username;
+    try {
+        const eskiRapor = await RaporModel.findOne({ kullaniciAdi: raporuGonderen, vakaID: vakaID });
+        if (eskiRapor) return res.json({ success: false, message: "Zaten çözüldü." });
+        const vaka = await VakaModel.findOne({ vakaNo: vakaID });
+        if (!vaka) return res.status(404).json({ success: false });
+
+        const prompt = `VAKA: ${vaka.baslik}, TANI: ${vaka.gizliTani}, RAPOR: "${rapor}". Puanla (0-100) ve yorumla. JSON: { "puan": 0, "yorum": "", "idealCevap": "" }`;
+        const result = await model.generateContent(prompt);
+        let aiResult = JSON.parse(result.response.text().match(/\{[\s\S]*\}/)[0]);
+
+        let hizBonusu = kalanSure > 0 ? Math.floor(kalanSure/30)*5 : 0;
+        if(hizBonusu > 20) hizBonusu = 20;
+        let finalPuan = Math.min(100, Math.round(aiResult.puan * (vaka.zorluk=='Zor'?1.5:1.25)) + hizBonusu);
+
+        const yeniRapor = new RaporModel({
+            raporMetni: rapor, alinanPuan: finalPuan, aiYorumu: aiResult.yorum + (hizBonusu?` (+${hizBonusu} Hız)`:""),
+            aiDogruCevap: aiResult.idealCevap, kullaniciAdi: raporuGonderen, vakaID: vakaID, tip: 'klasik'
+        });
+        await yeniRapor.save();
+        res.json({ success: true, message: aiResult.yorum, puan: finalPuan, dogruCevap: aiResult.idealCevap });
+    } catch (error) { res.status(500).json({ success: false, message: "Hata." }); }
 });
 
 app.get('/leaderboard', async (req, res) => {
     try {
         const siralama = await RaporModel.aggregate([
             { $group: { _id: "$kullaniciAdi", toplamPuan: { $sum: "$alinanPuan" }, cozulenVakaSayisi: { $sum: 1 } } },
-            { $sort: { toplamPuan: -1 } },
-            { $limit: 5 }
+            { $sort: { toplamPuan: -1 } }, { $limit: 5 }
         ]);
         res.json(siralama);
     } catch (error) { res.status(500).json({ error: "Hata." }); }
 });
 
 app.get('/my-reports', verifyToken, async (req, res) => {
-    try {
-        const raporlar = await RaporModel.find({ kullaniciAdi: req.user.username }).sort({ olusturulmaTarihi: -1 });
-        res.json(raporlar);
-    } catch (error) { res.status(500).json({ error: "Hata." }); }
+    try { const raporlar = await RaporModel.find({ kullaniciAdi: req.user.username }).sort({ olusturulmaTarihi: -1 }); res.json(raporlar); } catch (error) { res.status(500).json({ error: "Hata." }); }
 });
 
 app.post('/submit-feedback', verifyToken, async (req, res) => {
     try {
         const { mesaj } = req.body;
-        if(!mesaj.trim()) return res.json({ success: false, message: "Boş mesaj." });
-        const yeniFeedback = new FeedbackModel({ kullaniciAdi: req.user.username, mesaj: mesaj });
-        await yeniFeedback.save();
+        if(!mesaj.trim()) return res.json({ success: false });
+        await new FeedbackModel({ kullaniciAdi: req.user.username, mesaj: mesaj }).save();
         res.json({ success: true, message: "İletildi." });
-    } catch (error) { res.status(500).json({ success: false, message: "Hata." }); }
-});
-
-app.get('/admin/feedbacks', async (req, res) => {
-    try { const feedbacks = await FeedbackModel.find().sort({ tarih: -1 }); res.json(feedbacks); } catch (error) { res.status(500).json({ error: "Hata." }); }
-});
-
-app.put('/admin/toggle-feedback/:id', async (req, res) => {
-    try {
-        const feedback = await FeedbackModel.findById(req.params.id);
-        if (!feedback) return res.status(404).json({ success: false });
-        feedback.okundu = !feedback.okundu;
-        await feedback.save();
-        res.json({ success: true, yeniDurum: feedback.okundu });
     } catch (error) { res.status(500).json({ success: false }); }
 });
 
-app.delete('/admin/delete-feedback/:id', async (req, res) => {
+app.get('/admin/feedbacks', async (req, res) => { try { const f = await FeedbackModel.find().sort({ tarih: -1 }); res.json(f); } catch (e) { res.status(500).json({}); } });
+app.put('/admin/toggle-feedback/:id', async (req, res) => { try { const f = await FeedbackModel.findById(req.params.id); f.okundu = !f.okundu; await f.save(); res.json({ success: true, yeniDurum: f.okundu }); } catch (e) { res.status(500).json({ success: false }); } });
+app.delete('/admin/delete-feedback/:id', async (req, res) => { try { await FeedbackModel.findByIdAndDelete(req.params.id); res.json({ success: true }); } catch (e) { res.status(500).json({ success: false }); } });
+
+// --- YENİ: SİMÜLASYON GÜNCELLEME (ADMİN İÇİN) ---
+app.put('/admin/update-simulation/:no', async (req, res) => {
     try {
-        const silinen = await FeedbackModel.findByIdAndDelete(req.params.id);
-        if (silinen) res.json({ success: true, message: "Silindi." });
-        else res.status(404).json({ success: false });
-    } catch (error) { res.status(500).json({ success: false }); }
+        const guncellenecekVeri = req.body;
+        const updatedSim = await SimulasyonModel.findOneAndUpdate(
+            { simNo: req.params.no },
+            guncellenecekVeri,
+            { new: true }
+        );
+
+        if (updatedSim) {
+            await triggerSiteUpdate(`✏️ Simülasyon #${req.params.no} güncellendi.`);
+            res.json({ success: true, message: "Simülasyon başarıyla güncellendi!" });
+        } else {
+            res.status(404).json({ success: false, message: "Simülasyon bulunamadı." });
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: "Güncelleme hatası." });
+    }
 });
 
-// SUNUCUYU BAŞLAT
 app.listen(port, () => { console.log(`🚀 Sunucu çalışıyor: http://localhost:${port}`); });
