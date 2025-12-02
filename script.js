@@ -370,31 +370,34 @@ document.addEventListener("DOMContentLoaded", function() {
     // --- AKILLI YENİLİKLER MODALI (DÜZELTİLMİŞ) ---
     async function yenilikKontrol() {
         const newsModal = document.getElementById('yeniliklerModal');
-        if(!newsModal) return;
+        // KONTROL 1: HTML Var mı?
+        if(!newsModal) { alert("HATA 1: Pop-up HTML kutusu sayfada bulunamadı!"); return; }
 
-        // Kullanıcı yoksa çık (Ama yukarıda kontrol ettik, yine de güvenli olsun)
-        if (!username) return;
+        const aktifKullanici = localStorage.getItem('username');
+        // KONTROL 2: Kullanıcı var mı?
+        if (!aktifKullanici) { 
+            // alert("BİLGİ: Kullanıcı girişi yapılmamış, pop-up çalışmaz."); 
+            return; 
+        }
 
-        const storageKey = `site_version_key_${username}`;
+        const storageKey = `site_version_key_${aktifKullanici}`;
 
         try {
-            // ÖNEMLİ: URL sonuna ?t=... ekleyerek tarayıcı önbelleğini aşıyoruz (Cache Busting)
+            // KONTROL 3: Sunucuya Erişiliyor mu?
             const res = await fetch('/check-version?t=' + Date.now());
+            if(!res.ok) { alert("HATA 3: Sunucu /check-version rotasına cevap vermedi! (Server.js güncel değil)"); return; }
+            
             const data = await res.json();
             const sunucuVersiyonu = data.version;
             const sunucuMesaji = data.message;
-
             const yerelVersiyon = localStorage.getItem(storageKey);
 
-            console.log(`Versiyon Kontrol - Kullanıcı: ${username}`);
-            console.log(`Sunucu: ${sunucuVersiyon}, Yerel: ${yerelVersiyon}`);
+            // KONTROL 4: Versiyonlar Ne?
+            // alert(`DEBUG:\nSunucu: ${sunucuVersiyon}\nYerel: ${yerelVersiyon}\nKullanıcı: ${aktifKullanici}`);
 
             if (sunucuVersiyon !== yerelVersiyon) {
-                console.log("Farklı versiyon! Pop-up açılıyor...");
-                
                 const liste = newsModal.querySelector('.news-list');
                 if(liste && sunucuMesaji) {
-                    // Mevcut listenin başına son mesajı ekle
                     liste.innerHTML = `
                         <li style="background:rgba(59,130,246,0.1); border-left:3px solid var(--primary);">
                             <i class="fas fa-bell" style="color:var(--primary);"></i>
@@ -403,14 +406,10 @@ document.addEventListener("DOMContentLoaded", function() {
                                 ${sunucuMesaji}
                             </div>
                         </li>
-                        ${liste.innerHTML}
                     `;
                 }
-
-                setTimeout(() => { newsModal.style.display = 'flex'; }, 1000);
-            } else {
-                console.log("Versiyonlar aynı, pop-up açılmayacak.");
-            }
+                newsModal.style.display = 'flex'; // GÖSTER
+            } 
 
             window.yenilikleriKapat = function() {
                 newsModal.style.display = 'none';
@@ -418,11 +417,11 @@ document.addEventListener("DOMContentLoaded", function() {
             };
 
         } catch (err) {
-            console.log("Versiyon kontrol hatası:", err);
+            alert("HATA 5: Kodda bir patlama oldu:\n" + err);
         }
     }
-
-    // Çalıştır
+    
+    // Fonksiyonu çalıştır
     yenilikKontrol();
 
     // Feedback Gönderimi

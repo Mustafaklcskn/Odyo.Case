@@ -588,3 +588,95 @@ input, textarea {
 .btn-news-close:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(59, 130, 246, 0.5); }
 
 @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* =========================================
+   14. MOBİL UYUMLULUK (RESPONSIVE)
+   ========================================= */
+
+@media (max-width: 768px) {
+    
+    /* GENEL DÜZENLEMELER */
+    .container {
+        margin: 20px auto;
+        padding: 0 15px;
+    }
+    
+    .card, .leaderboard-panel, .vaka-karti {
+        padding: 15px; /* Mobilde iç boşlukları azalt */
+    }
+
+    /* NAVBAR (ÜST MENÜ) */
+    .navbar {
+        flex-direction: column; /* Alt alta diz */
+        gap: 15px;
+        padding: 15px;
+    }
+    
+    .navbar > div {
+        width: 100%;
+        justify-content: center; /* Butonları ortala */
+        flex-wrap: wrap; /* Sığmazsa alt satıra geçsin */
+    }
+
+    /* VAKA LİSTESİ */
+    .vaka-karti > div {
+        flex-direction: column;
+        align-items: flex-start !important; /* Sola yasla */
+        gap: 10px;
+    }
+    
+    .vaka-karti strong {
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    .btn-simulasyon {
+        width: 100%; /* Butonu tam genişlik yap */
+        text-align: center;
+        margin-left: 0 !important;
+        justify-content: center;
+    }
+
+    /* DETAY EKRANI BAŞLIK ALANI */
+    .vaka-header-row {
+        flex-direction: column; /* Başlık ve sayaç alt alta */
+        align-items: flex-start;
+    }
+    
+    #sayac-kutusu {
+        width: 100%; /* Sayaç tam genişlik olsun */
+        justify-content: center;
+        margin-top: 10px;
+    }
+
+    /* DETAY EKRANI - YAŞ & CİNSİYET KUTULARI */
+    #detay-ekrani > div[style*="display: flex; gap: 30px"] {
+        flex-direction: column; /* Kutuları alt alta diz */
+        align-items: flex-start !important;
+        gap: 10px !important;
+    }
+    
+    #detay-ekrani > div > div[style*="width: 1px"] {
+        display: none; /* Aradaki dikey çizgiyi gizle */
+    }
+
+    /* YAZI BOYUTLARI */
+    h1 { font-size: 1.5rem !important; }
+    h2 { font-size: 1.3rem !important; }
+    h3 { font-size: 1.1rem !important; }
+    
+    #detay-baslik {
+        font-size: 1.4rem !important;
+    }
+
+    /* PROFİL İSTATİSTİKLERİ */
+    .dashboard-grid {
+        grid-template-columns: 1fr; /* Tek sütun */
+    }
+
+    /* TABLOLAR (Kaydırma zaten var ama fontu küçültelim) */
+    th, td {
+        padding: 10px 5px !important;
+        font-size: 0.85rem;
+    }
+}
