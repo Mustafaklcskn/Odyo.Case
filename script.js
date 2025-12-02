@@ -197,6 +197,9 @@ document.addEventListener("DOMContentLoaded", function() {
         raporAlani.value = "";
         sonucMesaji.innerHTML = "";
         
+        const btnCikis = document.getElementById('btn-cikis');
+        if(btnCikis) btnCikis.style.display = 'none';
+
         // SAYAÇ KUTUSUNU BAŞLANGIÇTA GİZLE (Pop-up'tan sonra açılacak)
         if(sayacKutusu) sayacKutusu.style.display = "none";
 
@@ -363,6 +366,12 @@ document.addEventListener("DOMContentLoaded", function() {
     window.listeyeDon = function() {
         listeEkrani.style.display = 'block';
         detayEkrani.style.display = 'none';
+        const btnCikis = document.getElementById('btn-cikis');
+        if(btnCikis) btnCikis.style.display = 'inline-flex';
+        
+        if(sayacInterval) clearInterval(sayacInterval);
+        verileriHazirla();
+
         if(sayacInterval) clearInterval(sayacInterval);
         verileriHazirla(); 
     };
