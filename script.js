@@ -200,6 +200,9 @@ document.addEventListener("DOMContentLoaded", function() {
         const btnCikis = document.getElementById('btn-cikis');
         if(btnCikis) btnCikis.style.display = 'none';
 
+        const btnProfil = document.getElementById('btn-profil');
+        if(btnProfil) btnProfil.style.display = 'none';
+
         // SAYAÇ KUTUSUNU BAŞLANGIÇTA GİZLE (Pop-up'tan sonra açılacak)
         if(sayacKutusu) sayacKutusu.style.display = "none";
 
@@ -369,6 +372,9 @@ document.addEventListener("DOMContentLoaded", function() {
         const btnCikis = document.getElementById('btn-cikis');
         if(btnCikis) btnCikis.style.display = 'inline-flex';
         
+        const btnProfil = document.getElementById('btn-profil');
+        if(btnProfil) btnProfil.style.display = 'inline-flex';
+
         if(sayacInterval) clearInterval(sayacInterval);
         verileriHazirla();
 
