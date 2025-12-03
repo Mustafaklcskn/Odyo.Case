@@ -95,8 +95,22 @@
 
     /* TANI MODALI */
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; backdrop-filter: blur(8px); z-index: 999; }
-    .modal-box { background: #1e293b; padding: 40px; border-radius: 20px; width: 90%; max-width: 600px; text-align: center; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
-    
+    .modal-box { 
+            background: #1e293b; 
+            padding: 30px; 
+            border-radius: 20px; 
+            width: 90%; 
+            max-width: 600px; 
+            text-align: center; 
+            border: 1px solid rgba(255,255,255,0.1); 
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            
+            /* EKRANA SIĞDIRMA AYARLARI */
+            max-height: 85vh; /* Ekranın %85'inden büyük olamaz */
+            overflow-y: auto; /* Yazı uzunsa kaydırma çubuğu çıksın */
+            position: relative; /* Kapatma butonu için */
+        }
+
     @keyframes slideIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
 
     /* MOBİL UYUM */
@@ -221,9 +235,17 @@
                 <p id="ai-ideal" style="color:#d1fae5; font-size:0.9rem; font-style:italic; margin:0;">...</p>
             </div>
 
-            <button onclick="window.location.href='/'" class="tool-btn" style="width:100%; justify-content:center; margin-top:25px;">
-                Listeye Dön
-            </button>
+            <div style="display:flex; gap:10px; margin-top:25px;">
+                
+                <button onclick="document.getElementById('sonucModal').style.display='none'" class="tool-btn" style="flex:1; justify-content:center; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);">
+                    İncelemeye Dön
+                </button>
+
+                <button onclick="window.location.href='/'" class="tool-btn" style="flex:1; justify-content:center; background:var(--primary);">
+                    Listeye Dön
+                </button>
+                
+            </div>
         </div>
     </div>
 
