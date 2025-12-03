@@ -315,38 +315,6 @@ document.addEventListener("DOMContentLoaded", function() {
         } catch(e) { showToast("Bağlantı hatası", "error"); gonderButonu.disabled = false; }
     });
 
-    // --- YENİLİKLER KONTROLÜ (GÜNCELLENMİŞ) ---
-    async function yenilikKontrol() {
-        const newsModal = document.getElementById('yeniliklerModal');
-        if(!newsModal) return;
-        const key = `site_ver_${username}`;
-        
-        window.yenilikleriKapat = function(ver) {
-            newsModal.style.display = 'none';
-            if(ver) localStorage.setItem(key, ver);
-        };
-
-        try {
-            const res = await fetch('/check-version?t='+Date.now());
-            const data = await res.json();
-            const sVer = data.version; 
-            const sMsg = data.message;
-            
-            if(sVer && sVer !== localStorage.getItem(key)) {
-                const liste = newsModal.querySelector('.news-list');
-                if(liste && sMsg) {
-                    const yeni = `<li style="background:rgba(59,130,246,0.15); border-left:4px solid var(--primary); padding:12px; margin-bottom:15px; border-radius:8px;"><i class="fas fa-bullhorn" style="color:var(--primary);"></i><div><strong style="color:white;">SON GELİŞME:</strong><br><span style="color:#e2e8f0;">${sMsg}</span></div></li>`;
-                    liste.innerHTML = yeni + liste.innerHTML;
-                }
-                const btn = newsModal.querySelector('.btn-news-close');
-                if(btn) btn.onclick = () => window.yenilikleriKapat(sVer);
-                
-                setTimeout(() => newsModal.style.display = 'flex', 1000);
-            }
-        } catch(e){}
-    }
-    yenilikKontrol();
-
     // --- BİLDİRİM & ONAY FONKSİYONLARI ---
     window.showToast = (msg, type='info') => {
         let box = document.createElement('div'); box.className = `toast toast-${type}`;

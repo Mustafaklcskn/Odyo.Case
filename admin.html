@@ -88,23 +88,38 @@
 
             <div id="form-simulasyon" style="display:none;">
                 <div class="form-grid" style="margin-top:15px;">
-                    <div><label>Geliş Şikayeti (Görünen)</label><input type="text" id="sim-sikayet" placeholder="Hasta kapıdan girince ne diyor?"></div>
+                    <div><label>Geliş Şikayeti</label><input type="text" id="sim-sikayet" placeholder="Hasta ne diyor?"></div>
                     <div><label style="color:var(--danger);">Gerçek Tanı</label><input type="text" id="sim-tani" class="secret-input"></div>
                 </div>
 
-                <h3 style="margin:20px 0 10px 0; color:var(--primary); border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:5px;">🔍 Klinik Bulgular (Gizli)</h3>
-                
+                <h3 style="margin:20px 0 10px 0; color:var(--primary); border-bottom:1px solid rgba(255,255,255,0.1); font-size:0.9rem;">TEMEL TESTLER</h3>
                 <div class="form-grid">
-                    <div><label>Anamnez Cevabı</label><textarea id="sim-anamnez" rows="2" placeholder="Anamnez alınınca ne desin?"></textarea></div>
-                    <div><label>Otoskopi Bulgusu</label><textarea id="sim-otoskopi" rows="2" placeholder="Zar nasıl görünüyor?"></textarea></div>
-                    <div><label>Saf Ses Odyometrisi</label><textarea id="sim-safses" rows="2" placeholder="Bulgular (Örn: Sağda 40dB SNİK)"></textarea></div>
-                    <div><label>Timpanometri</label><textarea id="sim-timpano" rows="2" placeholder="Örn: Tip A"></textarea></div>
-                    <div><label>Akustik Refleks</label><textarea id="sim-refleks" rows="2" placeholder="Alındı / Alınamadı"></textarea></div>
-                    <div><label>Konuşma Testleri</label><textarea id="sim-konusma" rows="2" placeholder="SDS / SRT skorları"></textarea></div>
+                    <div><label>Anamnez Detayı</label><textarea id="sim-anamnez" rows="1"></textarea></div>
+                    <div><label>Otoskopi</label><textarea id="sim-otoskopi" rows="1"></textarea></div>
+                    <div><label>Saf Ses Odyo</label><textarea id="sim-safses" rows="1"></textarea></div>
+                    <div><label>Konuşma (SRT/SDS)</label><textarea id="sim-konusma" rows="1"></textarea></div>
+                    <div><label>Timpanometri</label><textarea id="sim-timpano" rows="1"></textarea></div>
+                    <div><label>Akustik Refleks</label><textarea id="sim-refleks" rows="1"></textarea></div>
+                </div>
+
+                <h3 style="margin:20px 0 10px 0; color:var(--accent); border-bottom:1px solid rgba(255,255,255,0.1); font-size:0.9rem;">İLERİ TESTLER & ELEKTROFİZYOLOJİ</h3>
+                <div class="form-grid">
+                    <div><label>Yüksek Frekans Odyo</label><textarea id="sim-yuksekfrekans" rows="1" placeholder="10-16 kHz..."></textarea></div>
+                    <div><label>Tone Decay</label><textarea id="sim-tonedecay" rows="1" placeholder="Var/Yok"></textarea></div>
+                    <div><label>SISI Testi</label><textarea id="sim-sisi" rows="1" placeholder="% Skor"></textarea></div>
+                    <div><label>ABLB</label><textarea id="sim-ablb" rows="1" placeholder="Rekruitment..."></textarea></div>
+                    
+                    <div><label>DPOAE</label><textarea id="sim-dpoae" rows="1"></textarea></div>
+                    <div><label>TEOAE</label><textarea id="sim-teoae" rows="1"></textarea></div>
+                    
+                    <div><label>ABR / BERA</label><textarea id="sim-abr" rows="1"></textarea></div>
+                    <div><label>ASSR</label><textarea id="sim-assr" rows="1"></textarea></div>
+                    <div><label>EcochG</label><textarea id="sim-ecochg" rows="1"></textarea></div>
+                    <div><label>CAEP (Kortikal)</label><textarea id="sim-caep" rows="1"></textarea></div>
                 </div>
 
                 <div style="margin-top:15px;">
-                    <label style="color:var(--accent);">⚠️ Gereksiz/Yasak Testler (AI Puan Kıracak)</label>
+                    <label style="color:var(--danger);">⚠️ Gereksiz/Yasak Testler</label>
                     <input type="text" id="sim-gereksiz" placeholder="Örn: İletim tipinde refleks bakılmaz...">
                 </div>
             </div>

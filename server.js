@@ -65,25 +65,39 @@ const VakaSchema = new mongoose.Schema({
 });
 const VakaModel = mongoose.models.Vaka || mongoose.model("Vaka", VakaSchema);
 
-// --- YENİ: KLİNİK SİMÜLASYON ŞEMASI ---
+// --- KLİNİK SİMÜLASYON ŞEMASI (GENİŞLETİLMİŞ BATARYA) ---
 const SimulasyonSchema = new mongoose.Schema({
-    simNo: { type: Number, unique: true }, // Simülasyon ID'si (örn: 201, 202)
-    baslik: { type: String, required: true }, // Hasta Adı veya Vaka Başlığı
+    simNo: { type: Number, unique: true }, 
+    baslik: { type: String, required: true },
     yas: { type: Number, required: true },
     cinsiyet: { type: String, required: true },
-    sikayet: { type: String, required: true }, // Hastanın ilk geliş şikayeti (Görünen)
+    sikayet: { type: String, required: true },
     
-    // GİZLİ KLİNİK VERİLER (Öğrenci istedikçe açılacak)
-    anamnez: { type: String, default: "Ekstra bir bilgi vermedi." },
-    otoskopi: { type: String, default: "Zar doğal, buşon yok." },
-    safSes: { type: String, default: "Normal sınırlar içinde." },
+    // TEMEL TESTLER
+    anamnez: { type: String, default: "Bilgi yok." },
+    otoskopi: { type: String, default: "Normal." },
+    safSes: { type: String, default: "Normal." },
     timpanometri: { type: String, default: "Tip A" },
     refleks: { type: String, default: "Alındı." },
     konusma: { type: String, default: "SDS: %100" },
+
+    // İLERİ TESTLER (YENİ EKLENENLER)
+    yuksekFrekans: { type: String, default: "Yapılmadı." },
+    toneDecay: { type: String, default: "Negatif." },
+    sisi: { type: String, default: "Negatif." },
+    ablb: { type: String, default: "Rekruitment yok." },
     
-    // AI DEĞERLENDİRME KRİTERLERİ
+    dpoae: { type: String, default: "Geçti." },
+    teoae: { type: String, default: "Geçti." },
+    
+    abr: { type: String, default: "Normal latanslar." },
+    assr: { type: String, default: "Eşikler uyumlu." },
+    ecochg: { type: String, default: "SP/AP oranı normal." },
+    caep: { type: String, default: "P1-N1-P2 dalgaları mevcut." },
+    
+    // AI DEĞERLENDİRME
     gercekTani: { type: String, required: true },
-    gereksizTestler: { type: String }, // Yapılmaması gerekenler (Puan kırmak için)
+    gereksizTestler: { type: String },
     
     eklenmeTarihi: { type: Date, default: Date.now }
 });
@@ -232,29 +246,24 @@ app.put('/admin/update-case/:no', upload.single('vakaResmi'), async (req, res) =
 
 // 1. Simülasyon Ekle (Admin)
 app.post('/admin/add-simulation', async (req, res) => {
-    // Burada body'den tüm klinik verileri alacağız
-    const { baslik, yas, cinsiyet, sikayet, gercekTani, gereksizTestler, anamnez, otoskopi, safSes, timpanometri, refleks, konusma } = req.body;
-    
+    // Tüm alanları body'den alıyoruz (req.body içindeki her şeyi modele gönderir)
+    // Bu yöntem (spread operator) daha pratiktir, tek tek yazmaya gerek kalmaz.
     try {
         const sonSim = await SimulasyonModel.findOne().sort({ simNo: -1 });
-        let yeniSimNo = 201; // Simülasyonlar 201'den başlasın (Karışmasın diye)
+        let yeniSimNo = 201; 
         if (sonSim) yeniSimNo = sonSim.simNo + 1;
 
+        // req.body içindeki tüm alanları al, simNo ekle
         const yeniSim = new SimulasyonModel({
             simNo: yeniSimNo,
-            baslik, yas, cinsiyet, sikayet,
-            gercekTani, gereksizTestler,
-            anamnez, otoskopi, safSes, timpanometri, refleks, konusma
+            ...req.body 
         });
 
         await yeniSim.save();
-        await triggerSiteUpdate(`🏥 Yeni Simülasyon Hastası Eklendi: ${baslik}`);
+        await triggerSiteUpdate(`🏥 Yeni Simülasyon Eklendi: ${req.body.baslik}`);
         res.json({ success: true, message: `Simülasyon ${yeniSimNo} eklendi!` });
 
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ success: false, message: "Hata oluştu." });
-    }
+    } catch (error) { res.status(500).json({ success: false, message: "Hata oluştu." }); }
 });
 
 // 2. Simülasyonları Listele (Öğrenci/Admin)
@@ -398,23 +407,16 @@ app.delete('/admin/delete-feedback/:id', async (req, res) => { try { await Feedb
 // --- YENİ: SİMÜLASYON GÜNCELLEME (ADMİN İÇİN) ---
 app.put('/admin/update-simulation/:no', async (req, res) => {
     try {
-        const guncellenecekVeri = req.body;
-        const updatedSim = await SimulasyonModel.findOneAndUpdate(
+        const updated = await SimulasyonModel.findOneAndUpdate(
             { simNo: req.params.no },
-            guncellenecekVeri,
+            req.body, // Gelen tüm veriyi güncelle
             { new: true }
         );
-
-        if (updatedSim) {
+        if (updated) {
             await triggerSiteUpdate(`✏️ Simülasyon #${req.params.no} güncellendi.`);
-            res.json({ success: true, message: "Simülasyon başarıyla güncellendi!" });
-        } else {
-            res.status(404).json({ success: false, message: "Simülasyon bulunamadı." });
-        }
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ success: false, message: "Güncelleme hatası." });
-    }
+            res.json({ success: true, message: "Güncellendi." });
+        } else res.status(404).json({ success: false });
+    } catch (error) { res.status(500).json({ success: false }); }
 });
 
 app.listen(port, () => { console.log(`🚀 Sunucu çalışıyor: http://localhost:${port}`); });

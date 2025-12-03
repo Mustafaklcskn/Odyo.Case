@@ -7,72 +7,110 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* KLİNİK ODA TASARIMI */
-        body { overflow: hidden; background: #0f172a; }
-        
+    /* KLİNİK ODA TASARIMI (DÜZELTİLMİŞ & FİTLENMİŞ) */
+    * { box-sizing: border-box; } /* Taşmaları önlemek için şart */
+    
+    body { 
+        overflow: hidden; /* Sayfa kaymasın */
+        background: #0f172a; 
+        margin: 0; 
+        font-family: 'Poppins', sans-serif;
+    }
+    
+    .sim-wrapper { 
+        display: grid; 
+        grid-template-columns: 300px 1fr 280px; 
+        gap: 20px; 
+        height: calc(100vh - 70px); /* Navbar yüksekliğini düşelim */
+        padding: 20px; 
+        max-width: 1600px; 
+        margin: 0 auto;
+    }
+    
+    /* 1. SOL: HASTA KARTI */
+    .patient-card { 
+        background: rgba(30,41,59,0.9); border-radius: 16px; padding: 25px; 
+        text-align: center; border: 1px solid rgba(255,255,255,0.1); 
+        display: flex; flex-direction: column;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    .avatar-box {
+        width: 110px; height: 110px; background: rgba(255,255,255,0.05); 
+        border-radius: 50%; margin: 0 auto 15px; display:flex; align-items:center; 
+        justify-content:center; font-size:3rem; color:#cbd5e1; border: 3px solid var(--primary);
+    }
+    .patient-info-row {
+        display: flex; justify-content: space-between; margin-top: 20px; 
+        background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px;
+    }
+
+    /* 2. ORTA: İŞLEM GEÇMİŞİ (LOG) */
+    .log-area { 
+        background: rgba(0,0,0,0.2); border-radius: 16px; padding: 20px; 
+        overflow-y: auto; /* Sadece dikey kaydırma */
+        display: flex; flex-direction: column; gap: 15px; 
+        border: 1px solid rgba(255,255,255,0.05); 
+        scroll-behavior: smooth;
+    }
+    .log-entry { 
+        background: rgba(30, 41, 59, 0.95); padding: 15px; border-radius: 12px; 
+        border-left: 4px solid var(--primary); animation: slideIn 0.3s ease; 
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .log-entry h4 { margin: 0 0 5px 0; color: var(--primary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; }
+    .log-entry p { margin: 0; color: #e2e8f0; font-size: 0.95rem; line-height: 1.5; }
+    
+    /* 3. SAĞ: DOKTOR PANELİ (SORUNLU KISIM DÜZELTİLDİ) */
+    .tools-area { 
+        display: flex; flex-direction: column; gap: 10px; 
+        overflow-y: auto; /* Sadece dikey kaydırma */
+        overflow-x: hidden; /* Yatay kaydırmayı ÖLDÜR */
+        padding-right: 8px; /* Scrollbar için boşluk */
+        height: 100%; /* Kapsayıcıya tam otur */
+    }
+
+    /* Butonlar için grid yapısı */
+    .tools-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; }
+    .tools-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; width: 100%; }
+
+    .tool-btn { 
+        width: 100%; /* Taasmayı engeller */
+        background: linear-gradient(145deg, rgba(59,130,246,0.1), rgba(30,41,59,0.4)); 
+        color: white; border: 1px solid rgba(255,255,255,0.1); padding: 14px; 
+        border-radius: 10px; text-align: left; cursor: pointer; font-weight: 600; 
+        transition: 0.2s; display: flex; align-items: center; gap: 10px; font-size: 0.9rem;
+        min-height: 50px; /* Eşit yükseklik için */
+    }
+    .tool-btn:hover { 
+        background: var(--primary); border-color: var(--primary); transform: translateY(-2px); 
+        box-shadow: 0 5px 15px rgba(59, 130, 246, 0.2);
+    }
+    .tool-btn i { width: 20px; text-align: center; font-size: 1rem; }
+
+    /* Kaydırma Çubuğu (Scrollbar) Güzelleştirme */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
+
+    /* TANI MODALI */
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; backdrop-filter: blur(8px); z-index: 999; }
+    .modal-box { background: #1e293b; padding: 40px; border-radius: 20px; width: 90%; max-width: 600px; text-align: center; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
+    
+    @keyframes slideIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+    /* MOBİL UYUM */
+    @media (max-width: 1024px) {
+        body { overflow: auto; } /* Mobilde kaydırmaya izin ver */
         .sim-wrapper { 
-            display: grid; grid-template-columns: 300px 1fr 280px; gap: 20px; 
-            height: calc(100vh - 80px); /* Navbar payı */
-            padding: 20px; max-width: 1600px; margin: 0 auto;
+            grid-template-columns: 1fr; 
+            height: auto; 
+            display: flex; flex-direction: column; 
+            padding: 10px;
         }
-        
-        /* SOL: HASTA KARTI */
-        .patient-card { 
-            background: rgba(30,41,59,0.9); border-radius: 16px; padding: 25px; 
-            text-align: center; border: 1px solid rgba(255,255,255,0.1); 
-            display: flex; flex-direction: column;
-        }
-        .avatar-box {
-            width: 110px; height: 110px; background: rgba(255,255,255,0.05); 
-            border-radius: 50%; margin: 0 auto 15px; display:flex; align-items:center; 
-            justify-content:center; font-size:3rem; color:#cbd5e1; border: 3px solid var(--primary);
-        }
-        .patient-info-row {
-            display: flex; justify-content: space-between; margin-top: 20px; 
-            background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px;
-        }
-
-        /* ORTA: İŞLEM GEÇMİŞİ (LOG) */
-        .log-area { 
-            background: rgba(0,0,0,0.3); border-radius: 16px; padding: 20px; 
-            overflow-y: auto; display: flex; flex-direction: column; gap: 15px; 
-            border: 1px solid rgba(255,255,255,0.05); scroll-behavior: smooth;
-        }
-        .log-entry { 
-            background: rgba(30, 41, 59, 0.8); padding: 15px; border-radius: 12px; 
-            border-left: 4px solid var(--primary); animation: slideIn 0.3s ease; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        }
-        .log-entry h4 { margin: 0 0 5px 0; color: var(--primary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; }
-        .log-entry p { margin: 0; color: #e2e8f0; font-size: 1rem; line-height: 1.5; }
-        
-        /* SAĞ: DOKTOR PANELİ */
-        .tools-area { 
-            display: flex; flex-direction: column; gap: 12px; overflow-y: auto; padding-right: 5px;
-        }
-        .tool-btn { 
-            background: linear-gradient(145deg, rgba(59,130,246,0.1), rgba(30,41,59,0.4)); 
-            color: white; border: 1px solid rgba(255,255,255,0.1); padding: 16px; 
-            border-radius: 12px; text-align: left; cursor: pointer; font-weight: 600; 
-            transition: 0.2s; display: flex; align-items: center; gap: 12px; font-size: 0.95rem;
-        }
-        .tool-btn:hover { 
-            background: var(--primary); border-color: var(--primary); transform: translateX(-5px); box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3);
-        }
-        .tool-btn i { width: 24px; text-align: center; font-size: 1.1rem; }
-
-        /* TANI MODALI */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; backdrop-filter: blur(8px); z-index: 999; }
-        .modal-box { background: #1e293b; padding: 40px; border-radius: 20px; width: 90%; max-width: 600px; text-align: center; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
-        
-        @keyframes slideIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
-
-        /* MOBİL UYUM */
-        @media (max-width: 1024px) {
-            body { overflow: auto; }
-            .sim-wrapper { grid-template-columns: 1fr; height: auto; display: flex; flex-direction: column; }
-            .log-area { height: 400px; }
-        }
+        .log-area { height: 400px; } /* Log ekranına sabit yükseklik */
+        .tools-area { overflow: visible; height: auto; } /* Mobilde scroll'u kapat, uzasın */
+    }
     </style>
 </head>
 <body>
@@ -112,17 +150,39 @@
         </div>
 
         <div class="tools-area">
-            <h4 style="color:#94a3b8; margin:0 0 5px 0; font-size:0.8rem;">İLETİŞİM & MUAYENE</h4>
-            <button onclick="islemYap('Anamnez Al', 'anamnez')" class="tool-btn"><i class="fas fa-comments"></i> Detaylı Anamnez</button>
-            <button onclick="islemYap('Otoskopi Yap', 'otoskopi')" class="tool-btn"><i class="fas fa-eye"></i> Otoskopik Bakı</button>
             
-            <h4 style="color:#94a3b8; margin:15px 0 5px 0; font-size:0.8rem;">ODİYOLOJİK TESTLER</h4>
-            <button onclick="islemYap('Saf Ses Odyometri', 'safSes')" class="tool-btn"><i class="fas fa-headphones"></i> Saf Ses Odyometri</button>
-            <button onclick="islemYap('Timpanometri', 'timpanometri')" class="tool-btn"><i class="fas fa-wave-square"></i> Timpanometri</button>
-            <button onclick="islemYap('Akustik Refleks', 'refleks')" class="tool-btn"><i class="fas fa-bolt"></i> Akustik Refleks</button>
-            <button onclick="islemYap('Konuşma Testleri', 'konusma')" class="tool-btn"><i class="fas fa-microphone-alt"></i> Konuşma Testleri</button>
-            
-            <button onclick="taniModalAc()" class="tool-btn" style="background: linear-gradient(135deg, #10b981, #059669); border:none; margin-top:auto; justify-content:center;">
+            <h4 style="color:#94a3b8; font-size:0.75rem; margin-bottom:5px;">TEMEL MUAYENE</h4>
+            <div class="tools-grid-2">
+                <button onclick="islemYap('Anamnez', 'anamnez')" class="tool-btn"><i class="fas fa-comments"></i> Anamnez</button>
+                <button onclick="islemYap('Otoskopi', 'otoskopi')" class="tool-btn"><i class="fas fa-eye"></i> Otoskopi</button>
+            </div>
+
+            <h4 style="color:#94a3b8; font-size:0.75rem; margin:15px 0 5px 0;">STANDART ODYOLOJİ</h4>
+            <button onclick="islemYap('Saf Ses Odyometri', 'safSes')" class="tool-btn"><i class="fas fa-headphones"></i> Saf Ses & Konuşma</button>
+            <div class="tools-grid-2">
+                <button onclick="islemYap('Timpanometri', 'timpanometri')" class="tool-btn"><i class="fas fa-wave-square"></i> Timpano</button>
+                <button onclick="islemYap('Akustik Refleks', 'refleks')" class="tool-btn"><i class="fas fa-bolt"></i> Refleks</button>
+            </div>
+
+            <h4 style="color:#94a3b8; font-size:0.75rem; margin:15px 0 5px 0;">İLERİ / PSİKOAKUSTİK</h4>
+            <button onclick="islemYap('Yüksek Frekans', 'yuksekFrekans')" class="tool-btn"><i class="fas fa-chart-line"></i> Yüksek Frekans Odyo</button>
+            <div class="tools-grid-3">
+                <button onclick="islemYap('Tone Decay', 'toneDecay')" class="tool-btn" style="font-size:0.8rem; padding:10px;"><i class="fas fa-arrow-down"></i> T.Decay</button>
+                <button onclick="islemYap('SISI', 'sisi')" class="tool-btn" style="font-size:0.8rem; padding:10px;"><i class="fas fa-percentage"></i> SISI</button>
+                <button onclick="islemYap('ABLB', 'ablb')" class="tool-btn" style="font-size:0.8rem; padding:10px;"><i class="fas fa-balance-scale"></i> ABLB</button>
+            </div>
+
+            <h4 style="color:#94a3b8; font-size:0.75rem; margin:15px 0 5px 0;">ELEKTROFİZYOLOJİ & EMİSYON</h4>
+            <div class="tools-grid-2">
+                <button onclick="islemYap('DPOAE', 'dpoae')" class="tool-btn"><i class="fas fa-water"></i> DPOAE</button>
+                <button onclick="islemYap('TEOAE', 'teoae')" class="tool-btn"><i class="fas fa-water"></i> TEOAE</button>
+                <button onclick="islemYap('ABR', 'abr')" class="tool-btn"><i class="fas fa-brain"></i> ABR</button>
+                <button onclick="islemYap('ASSR', 'assr')" class="tool-btn"><i class="fas fa-wave-square"></i> ASSR</button>
+                <button onclick="islemYap('EcochG', 'ecochg')" class="tool-btn"><i class="fas fa-bolt"></i> EcochG</button>
+                <button onclick="islemYap('CAEP', 'caep')" class="tool-btn"><i class="fas fa-activity"></i> CAEP</button>
+            </div>
+
+            <button onclick="taniModalAc()" class="tool-btn" style="background: linear-gradient(135deg, #10b981, #059669); border:none; margin-top:20px; justify-content:center;">
                 <i class="fas fa-clipboard-check"></i> Tanı Koy ve Bitir
             </button>
         </div>
@@ -199,25 +259,49 @@
         });
 
         function islemYap(etiket, veriKey) {
-            // 1. İşlemi Kaydet
+            // 1. İşlemi Kaydet (Sıralama ve AI analizi için önemli)
             islemGecmisi.push(etiket); 
 
-            // 2. Veritabanındaki karşılığını al
+            // 2. Veritabanındaki karşılığını al (Yoksa varsayılan mesaj)
             const sonuc = vakaData[veriKey] || "Bu test için özel bir bulgu girilmemiş.";
             
-            // İkon Seçimi
+            // 3. İkon ve Başlık Ayarı (Switch Bloğu)
             let ikon = "fa-info-circle";
-            if(etiket.includes("Anamnez")) ikon = "fa-comments";
-            if(etiket.includes("Otoskopi")) ikon = "fa-eye";
-            if(etiket.includes("Odyometri")) ikon = "fa-headphones";
-            if(etiket.includes("Timpanometri")) ikon = "fa-wave-square";
+            
+            switch(veriKey) {
+                // TEMEL
+                case 'anamnez': ikon = "fa-comments"; break;
+                case 'otoskopi': ikon = "fa-eye"; break;
+                case 'safSes': ikon = "fa-headphones"; break;
+                case 'timpanometri': ikon = "fa-wave-square"; break;
+                case 'refleks': ikon = "fa-bolt"; break;
+                case 'konusma': ikon = "fa-microphone-alt"; break;
+                
+                // İLERİ / PSİKOAKUSTİK
+                case 'yuksekFrekans': ikon = "fa-chart-line"; break;
+                case 'toneDecay': ikon = "fa-arrow-down"; break;
+                case 'sisi': ikon = "fa-percentage"; break;
+                case 'ablb': ikon = "fa-balance-scale"; break;
+                
+                // ELEKTROFİZYOLOJİ & EMİSYON
+                case 'dpoae': 
+                case 'teoae': ikon = "fa-water"; break; // Emisyon dalgası
+                
+                case 'abr': 
+                case 'assr': 
+                case 'caep': ikon = "fa-brain"; break; // Beyin aktivitesi
+                
+                case 'ecochg': ikon = "fa-bolt"; break; // Elektrik potansiyeli
+                
+                default: ikon = "fa-file-medical"; // Bilinmeyen testler için
+            }
 
-            // 3. Ekrana Bas
+            // 4. Ekrana Bas (Log)
             const logDiv = document.getElementById('log-feed');
             const entry = document.createElement('div');
             entry.className = 'log-entry';
             
-            // Eğer Anamnez ise tırnak içinde göster
+            // Eğer Anamnez ise tırnak içinde ve italik göster, diğerleri normal
             const gosterilecekMetin = (veriKey === 'anamnez') ? `<em>"${sonuc}"</em>` : sonuc;
 
             entry.innerHTML = `<h4><i class="fas ${ikon}"></i> ${etiket}</h4><p>${gosterilecekMetin}</p>`;
