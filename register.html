@@ -100,6 +100,18 @@
                 mesaj.innerText = "Bağlantı hatası!";
             }
         }
+
+        // --- ENTER TUŞU İLE KAYIT ---
+    document.addEventListener("keypress", function(event) {
+        // Eğer basılan tuş Enter ise
+        if (event.key === "Enter") {
+            // Kayıt ol butonunu bul ve tıkla
+            // (Sayfadaki ana butonu otomatik bulur)
+            const btn = document.querySelector("button"); 
+            if(btn) btn.click();
+        }
+    });
+
     </script>
 </body>
 </html>

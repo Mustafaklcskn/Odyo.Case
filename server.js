@@ -295,57 +295,70 @@ app.post('/evaluate-simulation', verifyToken, async (req, res) => {
         const sim = await SimulasyonModel.findOne({ simNo: simNo });
         if (!sim) return res.status(404).json({ success: false, message: "Simülasyon bulunamadı." });
 
-        // AI'ya Sor
-        const prompt = `
-            Sen Odyoloji Hocasısın. Öğrenci bir hastayı muayene etti.
-            
-            HASTA BİLGİLERİ:
-            Tanı: ${sim.gercekTani}
-            Şikayet: ${sim.sikayet}
-            Gereksiz/Yasak Testler: ${sim.gereksizTestler}
-            
-            ÖĞRENCİNİN YAPTIĞI İŞLEMLER (Sırasıyla):
-            ${islemGecmisi.join(' -> ')}
-            
-            ÖĞRENCİNİN KOYDUĞU TANI:
-            "${tani}"
+        // 1. KONTROL: Daha önce çözmüş mü?
+        const eskiRapor = await RaporModel.findOne({ 
+            kullaniciAdi: kullaniciAdi, 
+            vakaID: simNo, 
+            tip: 'simulasyon' 
+        });
 
-            DEĞERLENDİRME KRİTERLERİ:
-            1. Sıralama Doğru mu? (Önce Anamnez ve Otoskopi yapılmalı).
-            2. Gereksiz test yapıldı mı? (Puan kır).
-            3. Tanı doğru mu? (En önemli puan buradan).
+        // 2. AI DEĞERLENDİRMESİ (Her durumda çalışsın, yorum yapsın)
+        const prompt = `
+            Sen Odyoloji Hocasısın.
+            HASTA: ${sim.gercekTani}, ŞİKAYET: ${sim.sikayet}
+            YASAK TESTLER: ${sim.gereksizTestler}
             
-            CEVAP FORMATI (JSON):
-            { "puan": 0-100, "yorum": "Kısa ve eğitici geri bildirim.", "dogruYol": "İdeal işlem sırası..." }
+            ÖĞRENCİNİN İŞLEMLERİ: ${islemGecmisi.join(' -> ')}
+            ÖĞRENCİNİN TANISI: "${tani}"
+
+            Puanla (0-100) ve yorumla. Sıralama hatası ve gereksiz test varsa puan kır.
+            JSON ÇIKTI: { "puan": 0, "yorum": "...", "dogruYol": "..." }
         `;
 
         const result = await model.generateContent(prompt);
-        const text = result.response.text();
-        
+        let text = result.response.text();
+        // JSON Temizleme
+        const jsonBas = text.indexOf('{');
+        const jsonSon = text.lastIndexOf('}');
         let aiResult = { puan: 0, yorum: "Hata", dogruYol: "-" };
-        try {
-            const jsonBas = text.indexOf('{');
-            const jsonSon = text.lastIndexOf('}');
-            if (jsonBas !== -1 && jsonSon !== -1) aiResult = JSON.parse(text.substring(jsonBas, jsonSon + 1));
-        } catch (e) { console.error("JSON Hatası"); }
+        
+        if (jsonBas !== -1 && jsonSon !== -1) {
+            try {
+                aiResult = JSON.parse(text.substring(jsonBas, jsonSon + 1));
+            } catch(e) { console.error("JSON Parse Hatası"); }
+        }
 
-        // Raporu Kaydet (Tip: 'simulasyon')
+        // 3. PUAN AYARLAMASI (Eğer çözdüyse puanı sıfırla)
+        let kaydedilecekPuan = aiResult.puan;
+        let ekMesaj = "";
+
+        if (eskiRapor) {
+            kaydedilecekPuan = 0; // Puanı iptal et
+            ekMesaj = " (Daha önce çözüldüğü için puan eklenmedi - Pratik Modu)";
+            aiResult.yorum += ekMesaj; // Yorumun sonuna ekle ki öğrenci görsün
+        }
+
+        // 4. RAPORU KAYDET (Her deneme kaydedilir ama puanı ayarlanmış olarak)
         const yeniRapor = new RaporModel({
-            raporMetni: `[SİMÜLASYON] Tanı: ${tani} | İşlemler: ${islemGecmisi.join(', ')}`,
-            alinanPuan: aiResult.puan,
-            aiYorumu: aiResult.yorum,
+            raporMetni: `[SİM] Tanı: ${tani} | İşlemler: ${islemGecmisi.join(', ')}`,
+            alinanPuan: kaydedilecekPuan, 
+            aiYorumu: aiResult.yorum, 
             aiDogruCevap: aiResult.dogruYol,
-            kullaniciAdi: kullaniciAdi,
-            vakaID: simNo, // Simülasyon numarası
+            kullaniciAdi: kullaniciAdi, 
+            vakaID: simNo, 
             tip: 'simulasyon'
         });
         await yeniRapor.save();
 
+        // 5. SONUCU DÖNDÜR (Ekranda puan yine de görünsün ama veritabanına 0 gitti)
+        // İsteğe bağlı: Ekranda da "0 (Pratik)" yazsın istersen aiResult.puan'ı da güncelleyebiliriz.
+        // Ama genelde "90 aldın ama sayılmadı" demek daha eğitici olur.
+        
         res.json({ success: true, result: aiResult });
 
     } catch (error) { 
         console.error(error);
-        res.status(500).json({ success: false, message: "Hata." }); 
+        res.status(500).json({ success: false, message: "AI Hatası" }); 
     }
 });
 

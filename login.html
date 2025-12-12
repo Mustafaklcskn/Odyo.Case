@@ -99,6 +99,18 @@
                 console.error(error);
             }
         }
+
+        // --- ENTER TUŞU İLE GİRİŞ ---
+    document.addEventListener("keypress", function(event) {
+        // Eğer basılan tuş Enter ise
+        if (event.key === "Enter") {
+            // Giriş butonuna tıklamış gibi yap
+            // (Butonundaki onclick="girisYap()" fonksiyonunu tetikler)
+            const btn = document.querySelector("button"); 
+            if(btn) btn.click();
+        }
+    });
+
     </script>
 </body>
 </html>
