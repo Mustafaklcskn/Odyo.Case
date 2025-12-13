@@ -680,3 +680,63 @@ input, textarea {
         font-size: 0.85rem;
     }
 }
+
+/* --- OKUL KUTUSU İÇİN ZORLAYICI STİL --- */
+
+/* 1. Dış Kutu (Wrapper) - Görünümü bu sağlıyor */
+.school-wrapper {
+    position: relative;
+    width: 100%;
+    height: 50px;
+    background: rgba(30, 41, 59, 0.6) !important; /* Arka planı zorla */
+    border: 1px solid rgba(255, 255, 255, 0.2) !important; /* Çerçeveyi zorla */
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    overflow: hidden; /* Taşmaları gizle */
+}
+
+/* 2. Sol İkon Ayarı */
+.school-wrapper .input-icon {
+    position: absolute;
+    left: 15px;
+    color: #94a3b8;
+    z-index: 1; /* Altta kalmasın */
+    pointer-events: none;
+}
+
+/* 3. Select Elementi (Görünmez ama tıklanabilir yapıyoruz) */
+.custom-select {
+    width: 100%;
+    height: 100%;
+    background: transparent !important; /* Arka planı yok et */
+    border: none !important; /* Çerçeveyi yok et */
+    color: white !important;
+    font-size: 1rem;
+    padding-left: 45px; /* İkonun üstüne gelmesin */
+    padding-right: 40px;
+    cursor: pointer;
+    
+    /* Tarayıcının varsayılan stilini sil */
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    outline: none !important; /* Mavi çizgiyi öldür */
+}
+
+/* 4. Sağ Ok İkonu */
+.school-wrapper .arrow-icon {
+    position: absolute;
+    right: 15px;
+    color: #94a3b8;
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* 5. Açılan Liste Rengi (Simsiyah olmasın) */
+.custom-select option {
+    background-color: #1e293b; /* Koyu lacivert */
+    color: white;
+    padding: 10px;
+}

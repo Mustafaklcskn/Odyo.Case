@@ -30,9 +30,32 @@
             </div>
             
             <!-- Okul Bilgisi -->
-            <div class="input-wrapper">
-                <i class="fas fa-university icon-left"></i>
-                <input type="text" id="okul" placeholder="Okulunuz (Örn: Hacettepe, Cerrahpaşa)">
+           <div class="input-group school-wrapper">
+                <i class="fas fa-university input-icon"></i>
+                
+                <select id="school" required class="custom-select">
+                    <option value="" disabled selected>Okulunuzu Seçin</option>
+                    <option value="İstanbul Üni - Cerrahpaşa">İstanbul Üni - Cerrahpaşa</option>
+                    <option value="Hacettepe Üniversitesi">Hacettepe Üniversitesi</option>
+                    <option value="Gazi Üniversitesi">Gazi Üniversitesi</option>
+                    <option value="Marmara Üniversitesi">Marmara Üniversitesi</option>
+                    <option value="Ankara Yıldırım Beyazıt">Ankara Yıldırım Beyazıt</option>
+                    <option value="Dokuz Eylül Üniversitesi">Dokuz Eylül Üniversitesi</option>
+                    <option value="Ondokuz Mayıs Üniversitesi">Ondokuz Mayıs Üniversitesi</option>
+                    <option value="Trakya Üniversitesi">Trakya Üniversitesi</option>
+                    <option value="İnönü Üniversitesi">İnönü Üniversitesi</option>
+                    <option value="Sağlık Bilimleri Üniversitesi">Sağlık Bilimleri (SBÜ)</option>
+                    <option value="İstanbul Medipol Üniversitesi">İstanbul Medipol Üniversitesi</option>
+                    <option value="Bezmialem Vakıf Üniversitesi">Bezmialem Vakıf Üniversitesi</option>
+                    <option value="Biruni Üniversitesi">Biruni Üniversitesi</option>
+                    <option value="Üsküdar Üniversitesi">Üsküdar Üniversitesi</option>
+                    <option value="İstanbul Aydın Üniversitesi">İstanbul Aydın Üniversitesi</option>
+                    <option value="Gelişim Üniversitesi">Gelişim Üniversitesi</option>
+                    <option value="Başkent Üniversitesi">Başkent Üniversitesi</option>
+                    <option value="Diğer">Diğer / Mezun</option>
+                </select>
+
+                <i class="fas fa-chevron-down arrow-icon"></i>
             </div>
 
             <button id="gonder-butonu" onclick="kayitOl()">Hemen Kaydol</button>
