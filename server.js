@@ -323,7 +323,7 @@ app.post('/evaluate-simulation', verifyToken, async (req, res) => {
             ÖĞRENCİNİN KOYDUĞU TANI: "${tani}"
 
             Görevin: Öğrenciyi puanla (0-100) ve yorumla.
-            - Sıralama hatası, eksik test veya gereksiz test varsa puan kır.
+            - Sıralama hatası, eksik test veya gereksiz test varsa puan kır(vestibüler testleri değerlendirme dışında tut).
             - Yanlış tanı varsa puanı ciddi kır.
             
             ÖNEMLİ: Cevabı SADECE ve SADECE aşağıdaki JSON formatında ver. Başka hiçbir yazı, açıklama veya markdown ('\`\`\`json') kullanma.
