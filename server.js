@@ -29,7 +29,7 @@ async function sendEmailToAll(subject, htmlContent) {
         // Resend ile gönder
         const { data, error } = await resend.emails.send({
             from: 'OdyoCase <noreply@odyocase.com.tr>',
-            bcc: emails,
+            to: emails,
             subject: subject,
             html: `
                 <div style="font-family: 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto; background: #0f172a; color: #e2e8f0; border-radius: 16px; overflow: hidden;">
