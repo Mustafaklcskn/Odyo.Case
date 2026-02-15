@@ -14,12 +14,21 @@ require('dotenv').config();
 
 // --- 1. ADIM: ZOHO AYARLARI (GÜNCELLENDİ) ---
 const transporter = nodemailer.createTransport({
-    host: "smtp.zoho.com",  // Gmail yerine Zoho sunucusu
+    host: "smtp.zoho.eu",   // .com.tr domainler Zoho EU üzerinde çalışır
     port: 465,              // Güvenli port
     secure: true,           // SSL kullanıyoruz
     auth: {
-        user: process.env.EMAIL_USER, // Render'a gireceğimiz mail adresi (iletisim@odyocase...)
-        pass: process.env.EMAIL_PASS  // Render'a gireceğimiz şifre
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    }
+});
+
+// Transporter bağlantı testi
+transporter.verify((error, success) => {
+    if (error) {
+        console.error('📧 E-posta bağlantı hatası:', error.message);
+    } else {
+        console.log('✅ E-posta sistemi hazır (Zoho EU)');
     }
 });
 
