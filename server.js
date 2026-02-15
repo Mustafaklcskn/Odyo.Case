@@ -12,46 +12,52 @@ const fs = require('fs');
 const nodemailer = require('nodemailer');
 require('dotenv').config();
 
-// E-POSTA AYARLARI
+// --- 1. ADIM: ZOHO AYARLARI (GÜNCELLENDİ) ---
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: "smtp.zoho.com",  // Gmail yerine Zoho sunucusu
+    port: 465,              // Güvenli port
+    secure: true,           // SSL kullanıyoruz
     auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
+        user: process.env.EMAIL_USER, // Render'a gireceğimiz mail adresi (iletisim@odyocase...)
+        pass: process.env.EMAIL_PASS  // Render'a gireceğimiz şifre
     }
 });
 
-// Tüm kullanıcılara toplu e-posta gönder
+// --- 2. ADIM: TOPLU MAIL FONKSİYONU (AYNEN KORUNDU) ---
 async function sendEmailToAll(subject, htmlContent) {
     try {
+        // Veritabanından mailleri çekiyoruz
         const users = await UserModel.find({ email: { $ne: null, $exists: true } }).select('email');
         const emails = users.map(u => u.email).filter(Boolean);
+
         if (emails.length === 0) {
             console.log('📧 Gönderilecek e-posta adresi bulunamadı.');
             return { success: false, message: 'Kayıtlı e-posta adresi yok.' };
         }
 
+        // Maili gönderiyoruz
         await transporter.sendMail({
-            from: `"OdyoCase" <${process.env.EMAIL_USER}>`,
-            bcc: emails,
+            from: `"OdyoCase Bildirim" <${process.env.EMAIL_USER}>`, // Gönderen kısmı
+            bcc: emails, // Gizli kopya (Herkes birbirini görmesin diye BCC kullanıyoruz, bu çok doğru!)
             subject: subject,
             html: `
                 <div style="font-family: 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto; background: #0f172a; color: #e2e8f0; border-radius: 16px; overflow: hidden;">
                     <div style="background: linear-gradient(135deg, #3b82f6, #1e40af); padding: 30px; text-align: center;">
                         <h1 style="margin: 0; color: white; font-size: 1.8rem;">OdyoCase</h1>
                     </div>
-                    <div style="padding: 30px;">
+                    <div style="padding: 30px; color: #cbd5e1; line-height: 1.6;">
                         ${htmlContent}
                     </div>
                     <div style="padding: 20px; text-align: center; color: #64748b; font-size: 0.8rem; border-top: 1px solid rgba(255,255,255,0.1);">
-                        OdyoCase Ekibi | Bu e-postayı almak istemiyorsanız lütfen bize bildirin.
+                        OdyoCase Ekibi | <a href="https://www.odyocase.com.tr" style="color: #3b82f6; text-decoration: none;">Sitemizi Ziyaret Edin</a>
                     </div>
                 </div>
             `
         });
 
-        console.log(`📧 ${emails.length} kullanıcıya e-posta gönderildi.`);
+        console.log(`📧 ${emails.length} kullanıcıya e-posta başarıyla gönderildi.`);
         return { success: true, count: emails.length };
+
     } catch (error) {
         console.error('📧 E-posta gönderim hatası:', error);
         return { success: false, message: error.message };
