@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Kayıt Ol | OdyoCase</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="auth-page">
+    <div class="auth-container">
+        <div class="card">
+
+            <div class="auth-header">
+                <i class="fas fa-user-plus"></i>
+                <h2 style="margin:0; color:var(--text-main);">Kayıt Ol</h2>
+                <p style="color:#666;">Aramıza katıl ve vakaları çözmeye başla</p>
+            </div>
+
+            <div class="input-wrapper">
+                <i class="fas fa-user icon-left"></i>
+                <input type="text" id="kadi" placeholder="İsim Soyisim Giriniz">
+            </div>
+            <div class="input-wrapper">
+                <i class="fas fa-envelope icon-left"></i>
+                <input type="email" id="email" placeholder="E-posta Adresiniz" required>
+            </div>
+            <div class="input-wrapper">
+                <i class="fas fa-lock icon-left"></i>
+                <input type="password" id="sifre" placeholder="Güçlü Bir Şifre Belirleyin">
+                <i class="fas fa-eye toggle-password" onclick="sifreyiGosterGizle(this)"></i>
+            </div>
+
+            <!-- Okul Bilgisi -->
+            <div class="input-group school-wrapper">
+                <i class="fas fa-university input-icon"></i>
+
+                <select id="school" required class="custom-select">
+                    <option value="" disabled selected>Okulunuzu Seçin</option>
+                    <option value="İstanbul Üni - Cerrahpaşa">İstanbul Üni - Cerrahpaşa</option>
+                    <option value="Hacettepe Üniversitesi">Hacettepe Üniversitesi</option>
+                    <option value="Gazi Üniversitesi">Gazi Üniversitesi</option>
+                    <option value="Marmara Üniversitesi">Marmara Üniversitesi</option>
+                    <option value="Ankara Yıldırım Beyazıt">Ankara Yıldırım Beyazıt</option>
+                    <option value="Dokuz Eylül Üniversitesi">Dokuz Eylül Üniversitesi</option>
+                    <option value="Ondokuz Mayıs Üniversitesi">Ondokuz Mayıs Üniversitesi</option>
+                    <option value="Trakya Üniversitesi">Trakya Üniversitesi</option>
+                    <option value="İnönü Üniversitesi">İnönü Üniversitesi</option>
+                    <option value="Sağlık Bilimleri Üniversitesi">Sağlık Bilimleri (SBÜ)</option>
+                    <option value="İstanbul Medipol Üniversitesi">İstanbul Medipol Üniversitesi</option>
+                    <option value="Bezmialem Vakıf Üniversitesi">Bezmialem Vakıf Üniversitesi</option>
+                    <option value="Biruni Üniversitesi">Biruni Üniversitesi</option>
+                    <option value="Üsküdar Üniversitesi">Üsküdar Üniversitesi</option>
+                    <option value="İstanbul Aydın Üniversitesi">İstanbul Aydın Üniversitesi</option>
+                    <option value="Gelişim Üniversitesi">Gelişim Üniversitesi</option>
+                    <option value="Başkent Üniversitesi">Başkent Üniversitesi</option>
+                    <option value="Diğer">Diğer / Mezun</option>
+                </select>
+
+                <i class="fas fa-chevron-down arrow-icon"></i>
+            </div>
+
+            <div class="input-wrapper">
+                <i class="fas fa-gift icon-left"></i>
+                <input type="text" id="referans" placeholder="Referans Kodu (opsiyonel)">
+            </div>
+
+            <button id="gonder-butonu" onclick="kayitOl()">Hemen Kaydol</button>
+
+            <p id="mesaj" style="text-align:center; margin-top:15px; font-weight:600; min-height:20px;"></p>
+
+            <div class="auth-links">
+                <a href="/login.html" style="color:var(--primary); font-weight:600;">
+                    Zaten hesabın var mı? <span style="text-decoration:underline;">Giriş Yap</span>
+                </a>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Şifre Göster/Gizle
+        function sifreyiGosterGizle(ikon) {
+            const input = document.getElementById('sifre');
+            if (input.type === "password") {
+                input.type = "text";
+                ikon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = "password";
+                ikon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+
+        // Kayıt Ol Fonksiyonu
+        async function kayitOl() {
+            const kadi = document.getElementById('kadi').value;
+            const email = document.getElementById('email').value;
+            const sifre = document.getElementById('sifre').value;
+            const mesaj = document.getElementById('mesaj');
+            const okul = document.getElementById('school').value;
+            const referans = document.getElementById('referans').value.trim();
+
+            if (!kadi || !sifre || !email) {
+                mesaj.style.color = "var(--accent)";
+                mesaj.innerText = "Lütfen isim, e-posta ve şifre alanlarını doldurun.";
+                return;
+            }
+
+            // E-posta format kontrolü (opsiyonel ama varsa doğrula)
+            if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                mesaj.style.color = "var(--accent)";
+                mesaj.innerText = "Geçerli bir e-posta adresi girin.";
+                return;
+            }
+
+            mesaj.innerText = "Kayıt yapılıyor...";
+            mesaj.style.color = "var(--primary)";
+
+            try {
+                const res = await fetch('/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: kadi, email: email || undefined, password: sifre, school: okul })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    // Referans kodu girilmişse uygula
+                    if (referans) {
+                        try {
+                            const refRes = await fetch('/apply-referral', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ code: referans, username: kadi.toLowerCase().trim() })
+                            });
+                            const refData = await refRes.json();
+
+                            if (!refData.success) {
+                                mesaj.style.color = "var(--accent)";
+                                mesaj.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Kayıt başarılı ama referans kodu geçersiz!';
+                                setTimeout(() => window.location.href = '/login.html', 2500);
+                                return;
+                            }
+                        } catch (e) { /* Referans hatası kayıt işlemini engelemesin */ }
+                    }
+
+                    mesaj.style.color = "var(--secondary)"; // Yeşil
+                    mesaj.innerHTML = '<i class="fas fa-check-circle"></i> Kayıt Başarılı! Girişe yönlendiriliyorsunuz...';
+
+                    // 1.5 saniye sonra login sayfasına at
+                    setTimeout(() => window.location.href = '/login.html', 1500);
+                } else {
+                    mesaj.style.color = "var(--danger)"; // Kırmızı
+                    mesaj.innerText = data.message;
+                }
+            } catch (error) {
+                mesaj.style.color = "var(--danger)";
+                mesaj.innerText = "Bağlantı hatası!";
+            }
+        }
+
+        // --- ENTER TUŞU İLE KAYIT ---
+        document.addEventListener("keypress", function (event) {
+            // Eğer basılan tuş Enter ise
+            if (event.key === "Enter") {
+                // Kayıt ol butonunu bul ve tıkla
+                // (Sayfadaki ana butonu otomatik bulur)
+                const btn = document.querySelector("button");
+                if (btn) btn.click();
+            }
+        });
+
+    </script>
+</body>
+
+</html>

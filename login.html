@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Giriş Yap | OdyoCase</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Şifremi Unuttum Modal */
+        .reset-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(8px);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .reset-overlay.active {
+            display: flex;
+        }
+
+        .reset-box {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            padding: 35px;
+            border-radius: 20px;
+            max-width: 420px;
+            width: 90%;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            transform: scale(0.9);
+        }
+
+        .reset-box h3 {
+            color: var(--primary);
+            margin: 0 0 8px 0;
+            font-size: 1.3rem;
+        }
+
+        .reset-box p {
+            color: #94a3b8;
+            font-size: 0.85rem;
+            margin: 0 0 20px 0;
+            line-height: 1.5;
+        }
+
+        .reset-step {
+            display: none;
+        }
+
+        .reset-step.active {
+            display: block;
+        }
+
+        .reset-box .input-wrapper {
+            margin-bottom: 12px;
+        }
+
+        .reset-box button.reset-btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+            color: white;
+            transition: 0.3s;
+            margin-top: 8px;
+        }
+
+        .reset-box button.reset-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .reset-box .reset-cancel {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #94a3b8;
+            width: 100%;
+            padding: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 8px;
+            font-size: 0.85rem;
+            transition: 0.2s;
+        }
+
+        .reset-box .reset-cancel:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        #reset-mesaj {
+            text-align: center;
+            margin-top: 12px;
+            font-weight: 600;
+            min-height: 20px;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+
+<body class="auth-page">
+
+    <div class="auth-container">
+        <div class="card">
+
+            <div class="auth-header">
+                <i class="fas fa-fingerprint"></i>
+                <h2 style="margin:0; color:var(--dark);">Giriş Yap</h2>
+                <p style="color:#666; margin-top:5px;">Platforma erişmek için kimliğini doğrula</p>
+            </div>
+
+            <div class="input-wrapper">
+                <i class="fas fa-at icon-left"></i>
+                <input type="text" id="kadi" placeholder="E-posta veya İsim Soyisim">
+            </div>
+            <div class="input-wrapper">
+                <i class="fas fa-lock icon-left"></i>
+                <input type="password" id="sifre" placeholder="Şifre">
+                <i class="fas fa-eye toggle-password" onclick="sifreyiGosterGizle(this)"></i>
+            </div>
+
+            <div style="text-align:right; margin-bottom:15px;">
+                <a href="#" onclick="resetModalAc()"
+                    style="color:var(--primary); font-size:0.8rem; text-decoration:none; opacity:0.8;">
+                    <i class="fas fa-key"></i> Şifremi Unuttum
+                </a>
+            </div>
+
+            <button id="gonder-butonu" onclick="girisYap()">Giriş Yap</button>
+
+            <p id="mesaj"
+                style="text-align:center; margin-top:15px; font-weight:600; min-height:20px; color:var(--danger);"></p>
+
+            <div class="auth-links">
+                <a href="/register.html" style="color:var(--primary); font-weight:600;">
+                    Hesabın yok mu? <span style="text-decoration:underline;">Kayıt Ol</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ŞİFRE SIFIRLAMA MODALI -->
+    <div class="reset-overlay" id="reset-overlay">
+        <div class="reset-box">
+            <!-- ADIM 1: Kimlik Doğrulama -->
+            <div class="reset-step active" id="reset-step-1">
+                <h3><i class="fas fa-unlock-alt"></i> Şifre Sıfırlama</h3>
+                <p>Kayıt olurken kullandığın <strong>isim soyisim</strong> ve <strong>e-posta</strong> adresini gir.
+                    Eşleşirse yeni şifre belirleyebilirsin.</p>
+
+                <div class="input-wrapper">
+                    <i class="fas fa-user icon-left"></i>
+                    <input type="text" id="reset-kadi" placeholder="İsim Soyisim">
+                </div>
+                <div class="input-wrapper">
+                    <i class="fas fa-envelope icon-left"></i>
+                    <input type="email" id="reset-email" placeholder="Kayıtlı E-posta Adresin">
+                </div>
+
+                <button class="reset-btn" onclick="sifreDogrula()">
+                    <i class="fas fa-search"></i> Hesabı Doğrula
+                </button>
+                <button class="reset-cancel" onclick="resetModalKapat()">İptal</button>
+                <p id="reset-mesaj"></p>
+            </div>
+
+            <!-- ADIM 2: Yeni Şifre -->
+            <div class="reset-step" id="reset-step-2">
+                <h3><i class="fas fa-key"></i> Yeni Şifre Belirle</h3>
+                <p>Hesabın doğrulandı! Şimdi yeni bir şifre belirle.</p>
+
+                <div class="input-wrapper">
+                    <i class="fas fa-lock icon-left"></i>
+                    <input type="password" id="reset-yeni-sifre" placeholder="Yeni Şifre (min 4 karakter)">
+                </div>
+                <div class="input-wrapper">
+                    <i class="fas fa-check-circle icon-left"></i>
+                    <input type="password" id="reset-yeni-sifre-tekrar" placeholder="Yeni Şifre Tekrar">
+                </div>
+
+                <button class="reset-btn" onclick="sifreSifirla()">
+                    <i class="fas fa-save"></i> Şifreyi Güncelle
+                </button>
+                <button class="reset-cancel" onclick="resetModalKapat()">İptal</button>
+                <p id="reset-mesaj-2"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Şifre Göster/Gizle
+        function sifreyiGosterGizle(ikon) {
+            const input = document.getElementById('sifre');
+            if (input.type === "password") {
+                input.type = "text";
+                ikon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = "password";
+                ikon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+
+        // Giriş İşlemi
+        async function girisYap() {
+            const kadi = document.getElementById('kadi').value;
+            const sifre = document.getElementById('sifre').value;
+            const mesaj = document.getElementById('mesaj');
+
+            if (!kadi || !sifre) {
+                mesaj.style.color = "var(--warning-color)";
+                mesaj.innerText = "Lütfen boş alan bırakmayın.";
+                return;
+            }
+
+            mesaj.innerText = "Kontrol ediliyor...";
+            mesaj.style.color = "var(--primary)";
+
+            try {
+                const res = await fetch('/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: kadi, password: sifre })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    mesaj.style.color = "var(--success-color)";
+                    mesaj.innerHTML = '<i class="fas fa-check-circle"></i> Başarılı! Yönlendiriliyorsunuz...';
+
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('username', data.username);
+                    localStorage.setItem('isAdmin', data.isAdmin);
+                    localStorage.setItem('school', data.school);
+
+                    setTimeout(() => window.location.href = '/', 1000);
+                } else {
+                    mesaj.style.color = "var(--danger-color)";
+                    mesaj.innerText = data.message;
+                }
+            } catch (error) {
+                mesaj.style.color = "var(--danger-color)";
+                mesaj.innerText = "Sunucuyla bağlantı kurulamadı!";
+                console.error(error);
+            }
+        }
+
+        // --- ŞİFRE SIFIRLAMA ---
+        let resetDogrulanmisKadi = '';
+
+        function resetModalAc() {
+            document.getElementById('reset-overlay').classList.add('active');
+            document.getElementById('reset-step-1').classList.add('active');
+            document.getElementById('reset-step-2').classList.remove('active');
+            document.getElementById('reset-mesaj').innerText = '';
+            document.getElementById('reset-kadi').value = '';
+            document.getElementById('reset-email').value = '';
+        }
+
+        function resetModalKapat() {
+            document.getElementById('reset-overlay').classList.remove('active');
+            resetDogrulanmisKadi = '';
+        }
+
+        async function sifreDogrula() {
+            const kadi = document.getElementById('reset-kadi').value.trim();
+            const email = document.getElementById('reset-email').value.trim();
+            const mesaj = document.getElementById('reset-mesaj');
+
+            if (!kadi || !email) {
+                mesaj.style.color = '#f59e0b';
+                mesaj.innerText = 'Lütfen tüm alanları doldurun.';
+                return;
+            }
+
+            mesaj.style.color = 'var(--primary)';
+            mesaj.innerText = 'Kontrol ediliyor...';
+
+            try {
+                const res = await fetch('/verify-reset', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: kadi, email: email })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    resetDogrulanmisKadi = kadi;
+                    document.getElementById('reset-step-1').classList.remove('active');
+                    document.getElementById('reset-step-2').classList.add('active');
+                } else {
+                    mesaj.style.color = '#ef4444';
+                    mesaj.innerText = data.message;
+                }
+            } catch (e) {
+                mesaj.style.color = '#ef4444';
+                mesaj.innerText = 'Bağlantı hatası!';
+            }
+        }
+
+        async function sifreSifirla() {
+            const yeniSifre = document.getElementById('reset-yeni-sifre').value;
+            const tekrar = document.getElementById('reset-yeni-sifre-tekrar').value;
+            const mesaj = document.getElementById('reset-mesaj-2');
+
+            if (!yeniSifre || yeniSifre.length < 4) {
+                mesaj.style.color = '#f59e0b';
+                mesaj.innerText = 'Şifre en az 4 karakter olmalı.';
+                return;
+            }
+
+            if (yeniSifre !== tekrar) {
+                mesaj.style.color = '#ef4444';
+                mesaj.innerText = 'Şifreler eşleşmiyor!';
+                return;
+            }
+
+            mesaj.style.color = 'var(--primary)';
+            mesaj.innerText = 'Şifre güncelleniyor...';
+
+            try {
+                const res = await fetch('/reset-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: resetDogrulanmisKadi, newPassword: yeniSifre })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    mesaj.style.color = '#10b981';
+                    mesaj.innerHTML = '<i class="fas fa-check-circle"></i> Şifre güncellendi! Giriş yapabilirsin.';
+                    setTimeout(() => resetModalKapat(), 2000);
+                } else {
+                    mesaj.style.color = '#ef4444';
+                    mesaj.innerText = data.message;
+                }
+            } catch (e) {
+                mesaj.style.color = '#ef4444';
+                mesaj.innerText = 'Bağlantı hatası!';
+            }
+        }
+
+        // --- ENTER TUŞU İLE GİRİŞ ---
+        document.addEventListener("keypress", function (event) {
+            if (event.key === "Enter") {
+                const overlay = document.getElementById('reset-overlay');
+                if (overlay.classList.contains('active')) return; // Modal açıksa Enter'ı engelle
+                const btn = document.querySelector("#gonder-butonu");
+                if (btn) btn.click();
+            }
+        });
+
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Klinik Simülasyon | OdyoCase</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* KLİNİK ODA TASARIMI (DÜZELTİLMİŞ & FİTLENMİŞ) */
+        * {
+            box-sizing: border-box;
+        }
+
+        /* Taşmaları önlemek için şart */
+
+        body {
+            overflow: hidden;
+            /* Sayfa kaymasın */
+            background: #0f172a;
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .sim-wrapper {
+            display: grid;
+            grid-template-columns: 300px 1fr 280px;
+            gap: 20px;
+            height: calc(100vh - 70px);
+            /* Navbar yüksekliğini düşelim */
+            padding: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* 1. SOL: HASTA KARTI */
+        .patient-card {
+            background: rgba(30, 41, 59, 0.9);
+            border-radius: 16px;
+            padding: 25px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .avatar-box {
+            width: 110px;
+            height: 110px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: #cbd5e1;
+            border: 3px solid var(--primary);
+        }
+
+        .patient-info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        /* 2. ORTA: İŞLEM GEÇMİŞİ (LOG) */
+        .log-area {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+            padding: 20px;
+            overflow-y: auto;
+            /* Sadece dikey kaydırma */
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            scroll-behavior: smooth;
+        }
+
+        .log-entry {
+            background: rgba(30, 41, 59, 0.95);
+            padding: 15px;
+            border-radius: 12px;
+            border-left: 4px solid var(--primary);
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .log-entry h4 {
+            margin: 0 0 5px 0;
+            color: var(--primary);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .log-entry p {
+            margin: 0;
+            color: #e2e8f0;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        /* 3. SAĞ: DOKTOR PANELİ (SORUNLU KISIM DÜZELTİLDİ) */
+        .tools-area {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            overflow-y: auto;
+            /* Sadece dikey kaydırma */
+            overflow-x: hidden;
+            /* Yatay kaydırmayı ÖLDÜR */
+            padding-right: 8px;
+            /* Scrollbar için boşluk */
+            height: 100%;
+            /* Kapsayıcıya tam otur */
+        }
+
+        /* Butonlar için grid yapısı */
+        .tools-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .tools-grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 5px;
+            width: 100%;
+        }
+
+        .tool-btn {
+            width: 100%;
+            /* Taasmayı engeller */
+            background: linear-gradient(145deg, rgba(59, 130, 246, 0.1), rgba(30, 41, 59, 0.4));
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 14px;
+            border-radius: 10px;
+            text-align: left;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            min-height: 50px;
+            /* Eşit yükseklik için */
+        }
+
+        .tool-btn:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.2);
+        }
+
+        .tool-btn i {
+            width: 20px;
+            text-align: center;
+            font-size: 1rem;
+        }
+
+        /* Kaydırma Çubuğu (Scrollbar) Güzelleştirme */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* TANI MODALI */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(8px);
+            z-index: 999;
+        }
+
+        .modal-box {
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+
+            /* EKRANA SIĞDIRMA AYARLARI */
+            max-height: 85vh;
+            /* Ekranın %85'inden büyük olamaz */
+            overflow-y: auto;
+            /* Yazı uzunsa kaydırma çubuğu çıksın */
+            position: relative;
+            /* Kapatma butonu için */
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* MOBİL UYUM */
+        @media (max-width: 1024px) {
+            body {
+                overflow: auto;
+            }
+
+            /* Mobilde kaydırmaya izin ver */
+            .sim-wrapper {
+                grid-template-columns: 1fr;
+                height: auto;
+                display: flex;
+                flex-direction: column;
+                padding: 10px;
+            }
+
+            .log-area {
+                height: 400px;
+            }
+
+            /* Log ekranına sabit yükseklik */
+            .tools-area {
+                overflow: visible;
+                height: auto;
+            }
+
+            /* Mobilde scroll'u kapat, uzasın */
+        }
+
+        /* RENK KODLAMALI TEST BUTONLARI */
+        .tool-btn.basic {
+            background: linear-gradient(145deg, rgba(59, 130, 246, 0.2), rgba(30, 41, 59, 0.4));
+            border-left: 3px solid #3b82f6;
+        }
+
+        .tool-btn.advanced {
+            background: linear-gradient(145deg, rgba(245, 158, 11, 0.2), rgba(30, 41, 59, 0.4));
+            border-left: 3px solid #f59e0b;
+        }
+
+        .tool-btn.electro {
+            background: linear-gradient(145deg, rgba(139, 92, 246, 0.2), rgba(30, 41, 59, 0.4));
+            border-left: 3px solid #8b5cf6;
+        }
+
+        .tool-btn.basic:hover {
+            background: rgba(59, 130, 246, 0.4);
+        }
+
+        .tool-btn.advanced:hover {
+            background: rgba(245, 158, 11, 0.4);
+        }
+
+        .tool-btn.electro:hover {
+            background: rgba(139, 92, 246, 0.4);
+        }
+
+        /* İPUCU BUTONU */
+        .hint-btn {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(30, 41, 59, 0.6));
+            border: 1px dashed rgba(16, 185, 129, 0.4);
+            color: #10b981;
+            padding: 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+            transition: 0.3s;
+        }
+
+        .hint-btn:hover {
+            background: rgba(16, 185, 129, 0.3);
+        }
+
+        .hint-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* LOADING ANİMASYONU */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 1000;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-text {
+            color: white;
+            margin-top: 15px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <a href="/" style="text-decoration:none; display:flex; align-items:center; gap:10px;">
+            <div
+                style="background:rgba(255,255,255,0.1); width:35px; height:35px; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+                <i class="fas fa-chevron-left" style="color:white;"></i>
+            </div>
+            <span style="color:white; font-weight:bold;">Ana Sayfaya Dön</span>
+        </a>
+        <div style="font-weight:700; color:#94a3b8; letter-spacing:1px;">KLİNİK SİMÜLASYON</div>
+        <div style="width:35px;"></div>
+    </nav>
+
+    <div class="sim-wrapper">
+        <div class="patient-card">
+            <div class="avatar-box"><i class="fas fa-user"></i></div>
+            <h2 id="p-baslik" style="color:white; margin:10px 0; font-size:1.4rem;">Yükleniyor...</h2>
+
+            <div class="patient-info-row">
+                <div><small style="color:var(--text-muted); font-weight:bold;">YAŞ</small>
+                    <div id="p-yas" style="font-size:1.2rem;">--</div>
+                </div>
+                <div style="width:1px; background:rgba(255,255,255,0.1);"></div>
+                <div><small style="color:var(--text-muted); font-weight:bold;">CİNSİYET</small>
+                    <div id="p-cinsiyet" style="font-size:1.2rem;">--</div>
+                </div>
+            </div>
+
+            <div
+                style="margin-top:20px; text-align:left; background:rgba(245, 158, 11, 0.1); padding:15px; border-radius:10px; border:1px solid rgba(245, 158, 11, 0.2);">
+                <small style="color:#fbbf24; font-weight:bold; display:block; margin-bottom:5px;">⚠️ GELİŞ
+                    ŞİKAYETİ</small>
+                <div id="p-sikayet" style="font-style:italic; color:#e2e8f0; font-size:0.95rem;">--</div>
+            </div>
+
+            <!-- İPUCU BUTONU -->
+            <button class="hint-btn" id="ipucu-btn" onclick="ipucuGoster()">
+                <i class="fas fa-lightbulb"></i> İpucu Al (-10 puan)
+            </button>
+        </div>
+
+        <div class="log-area" id="log-feed">
+            <div class="log-entry" style="border-left-color: #10b981;">
+                <h4><i class="fas fa-robot"></i> Simülasyon Başladı</h4>
+                <p>Hasta muayene koltuğuna alındı. Sağdaki panelden işlemleri seçerek muayeneye başlayabilirsiniz.
+                    <br><br><strong>İpucu:</strong> İşlem sırasına dikkat edin, yapay zeka sizi izliyor! 👀
+                </p>
+            </div>
+        </div>
+
+        <div class="tools-area">
+
+            <h4 style="color:#3b82f6; font-size:0.75rem; margin-bottom:5px;">🔵 TEMEL MUAYENE</h4>
+            <div class="tools-grid-2">
+                <button onclick="islemYapAnimasyonlu('Anamnez', 'anamnez')" class="tool-btn basic"><i
+                        class="fas fa-comments"></i>
+                    Anamnez</button>
+                <button onclick="islemYapAnimasyonlu('Otoskopi', 'otoskopi')" class="tool-btn basic"><i
+                        class="fas fa-eye"></i>
+                    Otoskopi</button>
+            </div>
+
+            <h4 style="color:#3b82f6; font-size:0.75rem; margin:15px 0 5px 0;">🔵 STANDART ODYOLOJİ</h4>
+            <button onclick="islemYapAnimasyonlu('Saf Ses Odyometri', 'safSes')" class="tool-btn basic"><i
+                    class="fas fa-headphones"></i>
+                Saf Ses & Konuşma</button>
+            <div class="tools-grid-2">
+                <button onclick="islemYapAnimasyonlu('Timpanometri', 'timpanometri')" class="tool-btn basic"><i
+                        class="fas fa-wave-square"></i> Timpano</button>
+                <button onclick="islemYapAnimasyonlu('Akustik Refleks', 'refleks')" class="tool-btn basic"><i
+                        class="fas fa-bolt"></i>
+                    Refleks</button>
+            </div>
+
+            <h4 style="color:#f59e0b; font-size:0.75rem; margin:15px 0 5px 0;">🟠 İLERİ / PSİKOAKUSTİK</h4>
+            <button onclick="islemYapAnimasyonlu('Yüksek Frekans', 'yuksekFrekans')" class="tool-btn advanced"><i
+                    class="fas fa-chart-line"></i> Yüksek Frekans Odyo</button>
+            <div class="tools-grid-3">
+                <button onclick="islemYapAnimasyonlu('Tone Decay', 'toneDecay')" class="tool-btn advanced"
+                    style="font-size:0.8rem; padding:10px;"><i class="fas fa-arrow-down"></i> T.Decay</button>
+                <button onclick="islemYapAnimasyonlu('SISI', 'sisi')" class="tool-btn advanced"
+                    style="font-size:0.8rem; padding:10px;"><i class="fas fa-percentage"></i> SISI</button>
+                <button onclick="islemYapAnimasyonlu('ABLB', 'ablb')" class="tool-btn advanced"
+                    style="font-size:0.8rem; padding:10px;"><i class="fas fa-balance-scale"></i> ABLB</button>
+            </div>
+
+            <h4 style="color:#8b5cf6; font-size:0.75rem; margin:15px 0 5px 0;">🟣 ELEKTROFİZYOLOJİ & EMİSYON</h4>
+            <div class="tools-grid-2">
+                <button onclick="islemYapAnimasyonlu('DPOAE', 'dpoae')" class="tool-btn electro"><i
+                        class="fas fa-water"></i>
+                    DPOAE</button>
+                <button onclick="islemYapAnimasyonlu('TEOAE', 'teoae')" class="tool-btn electro"><i
+                        class="fas fa-water"></i>
+                    TEOAE</button>
+                <button onclick="islemYapAnimasyonlu('ABR', 'abr')" class="tool-btn electro"><i
+                        class="fas fa-brain"></i> ABR</button>
+                <button onclick="islemYapAnimasyonlu('ASSR', 'assr')" class="tool-btn electro"><i
+                        class="fas fa-wave-square"></i>
+                    ASSR</button>
+                <button onclick="islemYapAnimasyonlu('EcochG', 'ecochg')" class="tool-btn electro"><i
+                        class="fas fa-bolt"></i>
+                    EcochG</button>
+                <button onclick="islemYapAnimasyonlu('CAEP', 'caep')" class="tool-btn electro"><i
+                        class="fas fa-activity"></i>
+                    CAEP</button>
+            </div>
+
+            <button onclick="taniModalAc()" class="tool-btn"
+                style="background: linear-gradient(135deg, #10b981, #059669); border:none; margin-top:20px; justify-content:center;">
+                <i class="fas fa-clipboard-check"></i> Tanı Koy ve Bitir
+            </button>
+        </div>
+    </div>
+
+    <div id="taniModal" class="modal">
+        <div class="modal-box">
+            <h2 style="color:white; margin-top:0;">👨‍⚕️ Karar Anı</h2>
+            <p style="color:#94a3b8; margin-bottom:20px;">Topladığın bulgulara göre hastanın tanısı nedir?</p>
+
+            <textarea id="tani-input" rows="4"
+                style="width:100%; padding:15px; border-radius:10px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.3); color:white; font-family:inherit; font-size:1rem;"
+                placeholder="Örn: Sağ kulakta iletim tipi işitme kaybı..."></textarea>
+
+            <button id="btn-degerlendir" onclick="bitirVePuanla()" class="tool-btn"
+                style="width:100%; justify-content:center; background:var(--primary); margin-top:20px;">
+                Raporu Gönder ve Değerlendir
+            </button>
+            <button onclick="document.getElementById('taniModal').style.display='none'"
+                style="background:transparent; border:none; color:#64748b; margin-top:15px; cursor:pointer;">Vazgeç,
+                İncelemeye Dön</button>
+        </div>
+    </div>
+
+    <div id="sonucModal" class="modal">
+        <div class="modal-box" style="text-align:left; border-left: 5px solid var(--accent);">
+            <h2 style="color:var(--primary); margin-top:0; text-align:center;">Analiz Sonucu</h2>
+
+            <div style="text-align:center; margin:20px 0;">
+                <div style="font-size:3.5rem; font-weight:800; color:white;" id="ai-puan">--</div>
+                <div style="color:#94a3b8; font-size:0.9rem;">PUAN</div>
+            </div>
+
+            <div style="background:rgba(255,255,255,0.05); padding:20px; border-radius:12px; margin-bottom:20px;">
+                <strong style="color:var(--accent); display:block; margin-bottom:10px;">HOCA YORUMU:</strong>
+                <p id="ai-yorum" style="color:#e2e8f0; line-height:1.6; margin:0;">...</p>
+            </div>
+
+            <div style="background:rgba(16, 185, 129, 0.1); padding:15px; border-radius:12px;">
+                <strong style="color:#34d399; display:block; margin-bottom:5px;">İDEAL YOL:</strong>
+                <p id="ai-ideal" style="color:#d1fae5; font-size:0.9rem; font-style:italic; margin:0;">...</p>
+            </div>
+
+            <div style="display:flex; gap:10px; margin-top:25px;">
+
+                <button onclick="document.getElementById('sonucModal').style.display='none'" class="tool-btn"
+                    style="flex:1; justify-content:center; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);">
+                    İncelemeye Dön
+                </button>
+
+                <button onclick="window.location.href='/'" class="tool-btn"
+                    style="flex:1; justify-content:center; background:var(--primary);">
+                    Listeye Dön
+                </button>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const vakaNo = params.get('vaka');
+        let vakaData = {};
+
+        // İşlem sırasını tutan dizi (AI buna bakıp puan verecek)
+        let islemGecmisi = [];
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            const token = localStorage.getItem('token');
+            if (!token) window.location.href = '/login.html';
+
+            if (!vakaNo) { alert("Vaka seçilmedi!"); window.location.href = '/'; return; }
+
+            try {
+                // Simülasyon verisini çek (server.js'deki yeni rota)
+                const res = await fetch(`/simulation/${vakaNo}`);
+                const data = await res.json();
+
+                if (data.success) {
+                    vakaData = data.sim;
+                    document.getElementById('p-baslik').innerText = vakaData.baslik;
+                    document.getElementById('p-yas').innerText = vakaData.yas;
+                    document.getElementById('p-cinsiyet').innerText = vakaData.cinsiyet;
+                    document.getElementById('p-sikayet').innerText = `"${vakaData.sikayet}"`;
+                } else {
+                    alert("Vaka bulunamadı."); window.location.href = '/';
+                }
+            } catch (e) { console.error("Hata", e); }
+        });
+
+        function islemYap(etiket, veriKey) {
+            // 1. İşlemi Kaydet (Sıralama ve AI analizi için önemli)
+            islemGecmisi.push(etiket);
+
+            // 2. Veritabanındaki karşılığını al (Yoksa varsayılan mesaj)
+            const sonuc = vakaData[veriKey] || "Bu test için özel bir bulgu girilmemiş.";
+
+            // 3. İkon ve Başlık Ayarı (Switch Bloğu)
+            let ikon = "fa-info-circle";
+
+            switch (veriKey) {
+                // TEMEL
+                case 'anamnez': ikon = "fa-comments"; break;
+                case 'otoskopi': ikon = "fa-eye"; break;
+                case 'safSes': ikon = "fa-headphones"; break;
+                case 'timpanometri': ikon = "fa-wave-square"; break;
+                case 'refleks': ikon = "fa-bolt"; break;
+                case 'konusma': ikon = "fa-microphone-alt"; break;
+
+                // İLERİ / PSİKOAKUSTİK
+                case 'yuksekFrekans': ikon = "fa-chart-line"; break;
+                case 'toneDecay': ikon = "fa-arrow-down"; break;
+                case 'sisi': ikon = "fa-percentage"; break;
+                case 'ablb': ikon = "fa-balance-scale"; break;
+
+                // ELEKTROFİZYOLOJİ & EMİSYON
+                case 'dpoae':
+                case 'teoae': ikon = "fa-water"; break; // Emisyon dalgası
+
+                case 'abr':
+                case 'assr':
+                case 'caep': ikon = "fa-brain"; break; // Beyin aktivitesi
+
+                case 'ecochg': ikon = "fa-bolt"; break; // Elektrik potansiyeli
+
+                default: ikon = "fa-file-medical"; // Bilinmeyen testler için
+            }
+
+            // 4. Ekrana Bas (Log)
+            const logDiv = document.getElementById('log-feed');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+
+            // Eğer Anamnez ise tırnak içinde ve italik göster, diğerleri normal
+            const gosterilecekMetin = (veriKey === 'anamnez') ? `<em>"${sonuc}"</em>` : sonuc;
+
+            entry.innerHTML = `<h4><i class="fas ${ikon}"></i> ${etiket}</h4><p>${gosterilecekMetin}</p>`;
+
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight; // Otomatik aşağı kaydır
+        }
+
+        function taniModalAc() {
+            document.getElementById('taniModal').style.display = 'flex';
+        }
+
+        async function bitirVePuanla() {
+            const tani = document.getElementById('tani-input').value;
+            if (!tani.trim()) return alert("Lütfen bir tanı girin.");
+
+            const btn = document.getElementById('btn-degerlendir');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Hoca Değerlendiriyor...';
+            btn.disabled = true;
+
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch('/evaluate-simulation', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': token },
+                    body: JSON.stringify({
+                        simNo: vakaNo,
+                        islemGecmisi: islemGecmisi, // Kritik nokta: Sıralamayı gönderiyoruz
+                        tani: tani
+                    })
+                });
+
+                const data = await res.json();
+
+                document.getElementById('taniModal').style.display = 'none';
+                document.getElementById('sonucModal').style.display = 'flex';
+
+                if (data.success) {
+                    const r = data.result;
+                    document.getElementById('ai-puan').innerText = r.puan;
+
+                    // Puan Rengine Göre Renklendirme
+                    const puanEl = document.getElementById('ai-puan');
+                    if (r.puan >= 80) puanEl.style.color = "#10b981"; // Yeşil
+                    else if (r.puan >= 50) puanEl.style.color = "#f59e0b"; // Turuncu
+                    else puanEl.style.color = "#ef4444"; // Kırmızı
+
+                    document.getElementById('ai-yorum').innerText = r.yorum;
+                    document.getElementById('ai-ideal').innerText = r.dogruYol;
+                } else {
+                    alert("Hata: " + data.message);
+                }
+
+            } catch (e) {
+                alert("Sunucu hatası.");
+                btn.innerHTML = "Tekrar Dene";
+                btn.disabled = false;
+            }
+        }
+
+        // ================= YENİ FONKSİYONLAR =================
+
+        // --- LOADING ANİMASYONLU İŞLEM ---
+        function islemYapAnimasyonlu(etiket, veriKey) {
+            // Loading overlay oluştur
+            const overlay = document.createElement('div');
+            overlay.className = 'loading-overlay';
+            overlay.innerHTML = `
+                <div class="loading-spinner"></div>
+                <div class="loading-text">${etiket} yapılıyor...</div>
+            `;
+            document.body.appendChild(overlay);
+
+            // Gerçek işlemi simüle et (0.5-1.5 sn arası rastgele)
+            const sure = 500 + Math.random() * 1000;
+            setTimeout(() => {
+                overlay.remove();
+                islemYap(etiket, veriKey);
+            }, sure);
+        }
+
+        // --- İPUCU GÖSTER ---
+        async function ipucuGoster() {
+            const btn = document.getElementById('ipucu-btn');
+            if (btn.disabled) return;
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Yükleniyor...';
+
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch(`/ipucu/simulasyon/${vakaNo}`, {
+                    headers: { 'Authorization': token }
+                });
+                const data = await res.json();
+
+                if (data.ipucu) {
+                    // İpucunu log alanına ekle
+                    const logDiv = document.getElementById('log-feed');
+                    const entry = document.createElement('div');
+                    entry.className = 'log-entry';
+                    entry.style.borderLeftColor = '#10b981';
+                    entry.innerHTML = `
+                        <h4 style="color:#10b981;"><i class="fas fa-lightbulb"></i> İPUCU</h4>
+                        <p>${data.ipucu}</p>
+                        <small style="color:#ef4444;">(-10 puan ceza uygulandı)</small>
+                    `;
+                    logDiv.appendChild(entry);
+                    logDiv.scrollTop = logDiv.scrollHeight;
+
+                    btn.innerHTML = '<i class="fas fa-check"></i> İpucu Kullanıldı';
+                } else {
+                    btn.innerHTML = '<i class="fas fa-times"></i> İpucu Yok';
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-lightbulb"></i> İpucu Al (-10 puan)';
+                    }, 2000);
+                }
+            } catch (e) {
+                btn.innerHTML = '<i class="fas fa-times"></i> Hata';
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Odyometri Simülatörü | OdyoCase</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Odyometri Sayfasına Özel Stiller */
+        .odyo-grid {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 25px;
+            align-items: start;
+        }
+
+        @media (max-width: 900px) {
+            .odyo-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* sol panel: hasta ve kontroller */
+        .panel-column {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* sağ panel: odyogram */
+        .audiogram-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        canvas {
+            width: 100%;
+            height: auto;
+            cursor: crosshair;
+        }
+
+        /* HASTA KARTI */
+        .patient-card {
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9));
+            border-left: 5px solid var(--primary);
+            padding: 20px;
+            border-radius: 12px;
+            position: relative;
+        }
+
+        .response-light {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #334155;
+            border: 2px solid #475569;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5);
+            transition: all 0.1s;
+        }
+
+        .response-light.active {
+            background: #ef4444;
+            /* Kırmızı ışık */
+            box-shadow: 0 0 20px #ef4444, inset 0 2px 5px rgba(0, 0, 0, 0.2);
+            border-color: #fca5a5;
+        }
+
+        /* ODYOMETRE KONTROL PANELİ */
+        .device-panel {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .device-screen {
+            background: #0f172a;
+            color: #10b981;
+            font-family: 'Courier New', monospace;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #334155;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(16, 185, 129, 0.5);
+        }
+
+        .knob-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .knob-group {
+            text-align: center;
+        }
+
+        .knob-btn {
+            background: #334155;
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: 0.1s;
+            box-shadow: 0 4px 0 #1e293b;
+        }
+
+        .knob-btn:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        .signal-btn {
+            width: 100%;
+            padding: 15px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #991b1b;
+            transition: 0.1s;
+        }
+
+        .signal-btn:active {
+            transform: translateY(5px);
+            box-shadow: none;
+            background: #dc2626;
+        }
+
+        .channel-tabs {
+            display: flex;
+            margin-bottom: 15px;
+            background: #0f172a;
+            border-radius: 8px;
+            padding: 5px;
+        }
+
+        .ch-tab {
+            flex: 1;
+            text-align: center;
+            padding: 8px;
+            cursor: pointer;
+            color: #64748b;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .ch-tab.active {
+            background: #334155;
+            color: white;
+        }
+
+        .masking-controls {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            display: none;
+            /* JS ile açılacak */
+        }
+
+        .masking-controls.show {
+            display: block;
+        }
+
+        .tool-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: 0.2s;
+        }
+
+        .tool-btn:hover {
+            color: white;
+            border-color: white;
+        }
+
+        .tool-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Sağ/Sol Kulak Seçici */
+        .ear-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .ear-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid transparent;
+            background: #334155;
+            color: #94a3b8;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            opacity: 0.6;
+        }
+
+        .ear-btn.active.right {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: #ef4444;
+            color: #ef4444;
+            opacity: 1;
+        }
+
+        .ear-btn.active.left {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: #3b82f6;
+            color: #3b82f6;
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <a href="/" style="display: flex; align-items: center; text-decoration: none; gap: 0;">
+            <svg width="34" height="34" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg"
+                style="margin-right: -1px;">
+                <circle cx="25" cy="25" r="20" stroke="url(#gradO)" stroke-width="7" />
+                <path d="M18 22V28" stroke="white" stroke-width="3" stroke-linecap="round" />
+                <path d="M25 17V33" stroke="white" stroke-width="3" stroke-linecap="round" />
+                <path d="M32 22V28" stroke="white" stroke-width="3" stroke-linecap="round" />
+                <defs>
+                    <linearGradient id="gradO" x1="0" y1="0" x2="50" y2="50" gradientUnits="userSpaceOnUse">
+                        <stop stop-color="#3b82f6" />
+                        <stop offset="1" stop-color="#1e40af" />
+                    </linearGradient>
+                </defs>
+            </svg>
+            <span
+                style="font-size: 1.6rem; font-weight: 700; color: #fff; letter-spacing: -0.5px; line-height: 1;">dyo<span
+                    style="color: #3b82f6;">Case</span></span>
+        </a>
+        <div>
+            <a href="/index.html" class="nav-profil"><i class="fas fa-home"></i> Ana Sayfaya Dön</a>
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <div class="odyo-grid">
+            <!-- SOL KOLON: KONTROLLER -->
+            <div class="panel-column">
+
+                <!-- HASTA PANELİ -->
+                <div class="patient-card">
+                    <div style="display:flex; justify-content:space-between; align-items:start;">
+                        <div>
+                            <h3 style="margin:0 0 5px 0; color:white;">Hasta: <span id="patient-name">Ali Y.</span></h3>
+                            <div style="color:#94a3b8; font-size:0.9rem;">
+                                <span id="patient-age">45</span> Yaş • <span id="patient-gender">Erkek</span>
+                            </div>
+                        </div>
+                        <div class="response-light" id="response-light" title="Hasta Tepkisi"></div>
+                    </div>
+                    <div style="margin-top:15px; background:rgba(0,0,0,0.3); padding:10px; border-radius:8px;">
+                        <small
+                            style="color:#64748b; font-weight:bold; display:block; margin-bottom:5px;">ANAMNEZ</small>
+                        <p id="patient-anamnesis" style="margin:0; color:#e2e8f0; font-size:0.9rem; line-height:1.4;">
+                            Son 2 yıldır sağ kulağında çınlama ve işitme kaybı şikayeti var. Gürültülü ortamda
+                            çalışıyor.
+                        </p>
+                    </div>
+                    <button onclick="getHint()" class="tool-btn"
+                        style="width:100%; margin-top:15px; border-color:#f59e0b; color:#f59e0b;">
+                        <i class="fas fa-lightbulb"></i> İpucu Al (-10 Puan)
+                    </button>
+                    <div id="hint-box"
+                        style="display:none; margin-top:10px; color:#f59e0b; font-size:0.85rem; padding:8px; background:rgba(245, 158, 11, 0.1); border-radius:6px;">
+                    </div>
+                </div>
+
+                <!-- CİHAZ KONTROLLERİ -->
+                <div class="device-panel">
+                    <div class="device-screen">
+                        <span id="screen-freq">1000 Hz</span>
+                        <span id="screen-db">30 dB</span>
+                    </div>
+
+                    <!-- Kulak Seçimi -->
+                    <div class="ear-selector">
+                        <button class="ear-btn active right" onclick="setEar('right')">SAĞ (R)</button>
+                        <button class="ear-btn left" onclick="setEar('left')">SOL (L)</button>
+                    </div>
+
+                    <!-- Hava / Kemik Seçimi -->
+                    <div style="display:flex; gap:10px; margin-bottom:20px;">
+                        <button class="tool-btn active" id="btn-air" onclick="setConduction('air')" style="flex:1;">Hava
+                            Yolu</button>
+                        <button class="tool-btn" id="btn-bone" onclick="setConduction('bone')" style="flex:1;">Kemik
+                            Yolu</button>
+                    </div>
+
+                    <div class="knob-row">
+                        <div class="knob-group">
+                            <label
+                                style="color:#94a3b8; font-size:0.8rem; display:block; margin-bottom:5px;">FREKANS</label>
+                            <div style="display:flex; gap:5px;">
+                                <button class="knob-btn" onclick="changeFreq(-1)"><i
+                                        class="fas fa-chevron-left"></i></button>
+                                <button class="knob-btn" onclick="changeFreq(1)"><i
+                                        class="fas fa-chevron-right"></i></button>
+                            </div>
+                        </div>
+                        <div class="knob-group">
+                            <label style="color:#94a3b8; font-size:0.8rem; display:block; margin-bottom:5px;">ŞİDDET
+                                (dB)</label>
+                            <div style="display:flex; gap:5px;">
+                                <button class="knob-btn" onclick="changeDb(-5)"><i class="fas fa-minus"></i></button>
+                                <button class="knob-btn" onclick="changeDb(5)"><i class="fas fa-plus"></i></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="signal-btn" id="present-tone-btn" onmousedown="presentTone(true)"
+                        onmouseup="presentTone(false)" onmouseleave="presentTone(false)">
+                        SİNYAL VER
+                    </button>
+
+                    <!-- MASKELEME -->
+                    <div style="margin-top:20px; border-top:1px solid #334155; padding-top:15px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <label style="color:white; font-size:0.9rem; display:flex; align-items:center; gap:8px;">
+                                <i class="fas fa-mask"></i> Maskeleme (Ch 2)
+                            </label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="masking-toggle" onchange="toggleMasking()">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="masking-controls" id="masking-controls">
+                            <!-- MASKE KULAK SEÇİMİ -->
+                            <div style="margin-bottom:12px;">
+                                <span style="color:#94a3b8; font-size:0.8rem; display:block; margin-bottom:6px;">Maske
+                                    Verilecek Kulak:</span>
+                                <div style="display:flex; gap:8px;">
+                                    <button class="mask-ear-btn" id="mask-ear-right" onclick="setMaskEar('right')"
+                                        style="flex:1; padding:7px; border:2px solid transparent; background:#334155; color:#94a3b8; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.85rem; opacity:0.6;">
+                                        SAĞ (R)
+                                    </button>
+                                    <button class="mask-ear-btn active" id="mask-ear-left" onclick="setMaskEar('left')"
+                                        style="flex:1; padding:7px; border:2px solid #3b82f6; background:rgba(59,130,246,0.2); color:#3b82f6; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.85rem; opacity:1;">
+                                        SOL (L)
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div
+                                style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                                <span style="color:#94a3b8; font-size:0.85rem;">Maske Tipi:</span>
+                                <select id="mask-type"
+                                    style="height:30px; width:100px; padding:0 5px; font-size:0.8rem;">
+                                    <option value="NBN">NBN (Dar)</option>
+                                    <option value="WN">WN (Beyaz)</option>
+                                </select>
+                            </div>
+                            <div
+                                style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+                                <button class="knob-btn" style="width:30px; height:30px; font-size:0.9rem;"
+                                    onclick="changeMaskDb(-5)">-</button>
+                                <span id="mask-db-display"
+                                    style="color:white; font-family:'Courier New'; font-weight:bold;">0 dB</span>
+                                <button class="knob-btn" style="width:30px; height:30px; font-size:0.9rem;"
+                                    onclick="changeMaskDb(5)">+</button>
+                            </div>
+
+                            <!-- PLATO LOG -->
+                            <div id="plateau-log-container"
+                                style="margin-top:10px; background:rgba(0,0,0,0.3); border-radius:8px; padding:10px; max-height:120px; overflow-y:auto;">
+                                <div
+                                    style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                                    <span
+                                        style="color:#94a3b8; font-size:0.75rem; font-weight:bold; text-transform:uppercase; letter-spacing:1px;">Plato
+                                        Log</span>
+                                    <span id="plateau-status"
+                                        style="font-size:0.75rem; font-weight:bold; color:#64748b;">—</span>
+                                </div>
+                                <div id="plateau-log"
+                                    style="font-family:'Courier New'; font-size:0.75rem; color:#94a3b8;">
+                                    <span style="color:#64748b;">Henüz veri yok</span>
+                                </div>
+                            </div>
+
+                            <!-- OVERMASKING UYARISI -->
+                            <div id="overmasking-warning"
+                                style="display:none; margin-top:8px; padding:8px; background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); border-radius:6px;">
+                                <span style="color:#ef4444; font-size:0.8rem; font-weight:600;"><i
+                                        class="fas fa-exclamation-triangle"></i> Overmasking riski!</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- SONUÇ RAPORU YAZMA ALANI -->
+                <div
+                    style="background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9)); border: 1px solid #334155; border-radius: 12px; padding: 20px;">
+                    <label
+                        style="display:flex; align-items:center; gap:8px; color:white; font-weight:600; margin-bottom:12px; font-size:1rem;">
+                        <i class="fas fa-file-medical" style="color:var(--secondary);"></i> Sonuç Raporu
+                    </label>
+                    <p style="color:#94a3b8; font-size:0.85rem; margin:0 0 12px 0; line-height:1.5;">Odyogramı
+                        yorumlayın: İşitme kaybı tipi, derecesi ve önerilerinizi yazın.</p>
+                    <textarea id="odyo-report-area" rows="5"
+                        placeholder="Örnek: Bilateral simetrik sensörinöral işitme kaybı, yüksek frekanslarda belirgin..."
+                        style="width:100%; box-sizing:border-box; background:rgba(0,0,0,0.3); border:1px solid #475569; color:#e2e8f0; border-radius:8px; padding:12px; font-size:0.95rem; resize:vertical; font-family:inherit;"></textarea>
+                </div>
+
+                <!-- BUTONLAR -->
+                <div style="display:flex; gap:10px;">
+                    <button onclick="newCase()"
+                        style="flex:1; background:rgba(59,130,246,0.15); color:var(--primary); border:1px solid rgba(59,130,246,0.3); padding:15px; border-radius:10px; font-weight:bold; cursor:pointer; font-size:1rem; transition:0.2s;">
+                        <i class="fas fa-sync-alt"></i> Yeni Vaka Getir
+                    </button>
+                    <button id="finish-test-btn" onclick="finishTest()"
+                        style="flex:1; background:var(--secondary); color:white; border:none; padding:15px; border-radius:10px; font-weight:bold; cursor:pointer; font-size:1rem;">
+                        <i class="fas fa-check-circle"></i> Testi Bitir
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- SAĞ KOLON: ODYOGRAM -->
+            <div class="panel-column" style="width: 100%;">
+                <div class="audiogram-container">
+                    <div
+                        style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid #e2e8f0; padding-bottom:10px;">
+                        <h3 style="margin:0; color:#1e293b;">Odyogram</h3>
+                        <div style="display:flex; gap:15px; font-size:0.85rem; color:#64748b;">
+                            <div style="display:flex; align-items:center; gap:5px;"><span
+                                    style="width:12px; height:12px; border-radius:50%; border:2px solid #ef4444; display:block;"></span>
+                                Sağ (O)</div>
+                            <div style="display:flex; align-items:center; gap:5px;"><span
+                                    style="width:12px; height:12px; display:block; position:relative; width:10px; height:10px; color:#3b82f6; font-weight:bold; line-height:10px;">X</span>
+                                Sol (X)</div>
+                        </div>
+                    </div>
+
+                    <canvas id="audiogramCanvas" width="600" height="600"></canvas>
+
+                    <div style="margin-top:15px; display:flex; justify-content:center; gap:10px;">
+                        <button class="tool-btn active" style="background:#e2e8f0; color:#1e293b; border:none;"
+                            onclick="markThreshold()">
+                            <i class="fas fa-map-marker-alt"></i> Eşik İşaretle (Boşluk Tuşu)
+                        </button>
+                        <button class="tool-btn" style="background:#fee2e2; color:#ef4444; border:none;"
+                            onclick="deletePoint()">
+                            <i class="fas fa-trash"></i> Son Noktayı Sil
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Rapor Modal (Test Bitince Açılır) -->
+                <div id="report-modal"
+                    style="display:none; background:rgba(30,41,59,0.95); position:fixed; top:0; left:0; right:0; bottom:0; padding:20px; z-index:999; overflow-y:auto;">
+                    <div class="container" style="max-width:800px; margin-top:50px;">
+                        <div class="card">
+                            <h2 style="color:var(--primary); margin-top:0;">Test Sonucu</h2>
+                            <div id="ai-evaluation-result">
+                                <p>Testiniz değerlendiriliyor...</p>
+                            </div>
+                            <button class="btn-back" onclick="location.reload()" style="margin-top:20px;">Yeni
+                                Vaka</button>
+                            <a href="/" class="btn-back-list">Ana Sayfaya Dön</a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+    <script src="odyometri.js"></script>
+</body>
+
+</html>

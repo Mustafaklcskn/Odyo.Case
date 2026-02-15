@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Öğrenci Paneli | OdyoCase</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* MODAL (POP-UP PENCERE) STİLLERİ */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 700px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            position: relative;
+            color: #f1f5f9;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .close-btn:hover {
+            color: white;
+        }
+
+        .modal-label {
+            color: var(--primary);
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            display: block;
+            margin-top: 20px;
+        }
+
+        .modal-text {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            line-height: 1.6;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.95rem;
+        }
+
+        /* ROZET GALERİSİ */
+        .badge-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .badge-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            transition: 0.3s;
+        }
+
+        .badge-item:hover {
+            transform: translateY(-3px);
+        }
+
+        .badge-item.locked {
+            opacity: 0.4;
+            filter: grayscale(1);
+        }
+
+        .badge-item .badge-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-size: 1.5rem;
+        }
+
+        .badge-item h5 {
+            margin: 0 0 5px 0;
+            color: white;
+            font-size: 0.85rem;
+        }
+
+        .badge-item p {
+            margin: 0;
+            color: #94a3b8;
+            font-size: 0.7rem;
+        }
+
+        /* PROFİL FOTOĞRAFI */
+        .profile-avatar-upload {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .profile-avatar-upload:hover::after {
+            content: '📷';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.5rem;
+            background: rgba(0, 0, 0, 0.7);
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .profile-avatar-upload img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        /* HAFTALIK GRAFİK */
+        .stats-chart {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 15px;
+        }
+
+        .chart-bar-container {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            height: 120px;
+            gap: 15px;
+        }
+
+        .chart-bar-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .chart-bar {
+            width: 100%;
+            max-width: 40px;
+            background: linear-gradient(to top, var(--primary), var(--secondary));
+            border-radius: 6px 6px 0 0;
+            min-height: 5px;
+            transition: height 0.5s ease;
+        }
+
+        .chart-bar-label {
+            font-size: 0.7rem;
+            color: #94a3b8;
+            margin-top: 8px;
+        }
+
+        /* DAVET BÖLÜMÜ */
+        .referral-section {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(16, 185, 129, 0.1));
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .referral-code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--primary);
+            letter-spacing: 2px;
+            display: inline-block;
+            margin: 10px 0;
+        }
+
+        .share-btn {
+            background: #25D366;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .share-btn:hover {
+            background: #1ebe5d;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <a href="/" style="display: flex; align-items: center; text-decoration: none; gap: 0;">
+            <svg width="34" height="34" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg"
+                style="margin-right: -1px;">
+                <circle cx="25" cy="25" r="20" stroke="url(#gradO)" stroke-width="7" />
+                <path d="M18 22V28" stroke="white" stroke-width="3" stroke-linecap="round" />
+                <path d="M25 17V33" stroke="white" stroke-width="3" stroke-linecap="round" />
+                <path d="M32 22V28" stroke="white" stroke-width="3" stroke-linecap="round" />
+                <defs>
+                    <linearGradient id="gradO" x1="0" y1="0" x2="50" y2="50" gradientUnits="userSpaceOnUse">
+                        <stop stop-color="#3b82f6" />
+                        <stop offset="1" stop-color="#1e40af" />
+                    </linearGradient>
+                </defs>
+            </svg>
+            <span style="font-size: 1.6rem; font-weight: 700; color: #fff; letter-spacing: -0.5px; line-height: 1;">
+                dyo<span style="color: #3b82f6;">Case</span>
+            </span>
+        </a>
+
+        <div>
+            <a href="/" class="nav-profil"><i class="fas fa-home"></i> Ana Sayfaya Dön</a>
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <div class="card">
+            <div class="profile-header">
+                <div class="profile-avatar"><i class="fas fa-user-graduate"></i></div>
+                <div>
+                    <h1 style="margin:0; font-size:1.8rem; color:var(--text-main);">
+                        Merhaba, <span id="kullanici-adi"
+                            style="color:var(--primary); text-transform: capitalize;">Öğrenci</span>
+                    </h1>
+                    <p id="okul-bilgisi" style="color:var(--text-muted); margin:5px 0;">Odyoloji Bölümü</p>
+                    <div style="margin-top: 10px;">
+                        <span id="seviye-badge" class="badge badge-med" style="font-size:0.9rem;">Analizler
+                            Yükleniyor...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="stat-card">
+                    <div class="stat-icon icon-blue"><i class="fas fa-folder-open"></i></div>
+                    <div class="stat-info">
+                        <h3 id="toplam-vaka">0</h3>
+                        <p>Çözülen Vaka</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon icon-green"><i class="fas fa-star"></i></div>
+                    <div class="stat-info">
+                        <h3 id="ortalama-puan">0</h3>
+                        <p>Ortalama Puan</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon icon-orange"><i class="fas fa-trophy"></i></div>
+                    <div class="stat-info">
+                        <h3 id="en-yuksek">0</h3>
+                        <p>En Yüksek Puan</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ROZET GALERİSİ -->
+        <div class="card">
+            <h2 style="display:flex; align-items:center; gap:10px;">
+                <i class="fas fa-medal" style="color:var(--accent);"></i> Rozet Koleksiyonum
+            </h2>
+            <div class="badge-gallery" id="rozet-galerisi">
+                <p style="color:#94a3b8;">Rozetler yükleniyor...</p>
+            </div>
+        </div>
+
+        <!-- HAFTALIK AKTİVİTE -->
+        <div class="card">
+            <h2 style="display:flex; align-items:center; gap:10px;">
+                <i class="fas fa-chart-bar" style="color:var(--secondary);"></i> Haftalık Aktivite
+            </h2>
+            <div class="stats-chart">
+                <div class="chart-bar-container" id="haftalik-grafik">
+                    <p style="color:#94a3b8;">Grafik yükleniyor...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- DAVET SİSTEMİ -->
+        <div class="card">
+            <h2 style="display:flex; align-items:center; gap:10px;">
+                <i class="fas fa-user-plus" style="color:var(--primary);"></i> Arkadaşını Davet Et
+            </h2>
+            <div class="referral-section">
+                <p style="color:#e2e8f0; margin:0 0 10px 0;">Arkadaşlarını davet et, birlikte öğrenin!</p>
+                <div style="display:flex; align-items:center; flex-wrap:wrap; gap:10px;">
+                    <span class="referral-code" id="davet-kodu">...</span>
+                    <button onclick="kodKopyala(this)" class="copy-btn" id="kopyala-btn">
+                        <i class="fas fa-copy"></i> Kopyala
+                    </button>
+                    <button class="share-btn" onclick="whatsappPaylas()">
+                        <i class="fab fa-whatsapp"></i> WhatsApp'ta Paylaş
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card leaderboard-panel">
+            <h2 style="display:flex; align-items:center; gap:10px;">
+                <i class="fas fa-history" style="color:var(--text-muted);"></i> Rapor Geçmişi
+            </h2>
+
+            <div style="overflow-x: auto;">
+                <table id="gecmis-tablosu">
+                    <thead>
+                        <tr>
+                            <th>Tarih</th>
+                            <th>Vaka</th>
+                            <th>Puan</th>
+                            <th style="text-align: right;">Detaylar</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablo-govdesi">
+                        <tr>
+                            <td colspan="4">Yükleniyor...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="detayModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="modalKapat()">&times;</span>
+            <h2
+                style="margin-top:0; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:15px; color:var(--text-main);">
+                📄 Rapor ve Analiz Detayı
+            </h2>
+
+            <span class="modal-label"><i class="fas fa-pen-nib"></i> Sizin Klinik Yorumunuz:</span>
+            <div id="modal-rapor" class="modal-text">...</div>
+
+            <span class="modal-label"><i class="fas fa-chalkboard-teacher"></i> AI Hoca Geri Bildirimi:</span>
+            <div id="modal-yorum" class="modal-text" style="border-left: 3px solid var(--accent);">...</div>
+
+            <span class="modal-label" style="color:var(--secondary);"><i class="fas fa-check-circle"></i> İdeal Uzman
+                Yaklaşımı:</span>
+            <div id="modal-ideal" class="modal-text"
+                style="border-left: 3px solid var(--secondary); background:rgba(16, 185, 129, 0.05); color:#e2e8f0;">...
+            </div>
+
+            <div
+                style="text-align: right; margin-top:20px; border-top:1px solid rgba(255,255,255,0.1); padding-top:15px;">
+                <span class="modal-label" style="display:inline; margin:0; color:var(--text-muted);">Alınan Puan:</span>
+                <span id="modal-puan" class="badge badge-high" style="font-size:1.4rem; margin-left:10px;">0</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", async function () {
+            const token = localStorage.getItem('token');
+            const username = localStorage.getItem('username');
+            const okul = localStorage.getItem('school');
+
+            if (!token) { window.location.href = '/login.html'; return; }
+
+            document.getElementById('kullanici-adi').innerText = username;
+            if (okul && okul !== "undefined") document.getElementById('okul-bilgisi').innerText = okul + " | Odyoloji";
+
+            try {
+                const response = await fetch('/my-reports', { headers: { 'Authorization': token } });
+                const raporlar = await response.json();
+
+                const tablo = document.getElementById('tablo-govdesi');
+                const toplamVakaEl = document.getElementById('toplam-vaka');
+                const ortalamaPuanEl = document.getElementById('ortalama-puan');
+                const enYuksekEl = document.getElementById('en-yuksek');
+                const seviyeBadge = document.getElementById('seviye-badge');
+
+                tablo.innerHTML = "";
+
+                if (raporlar.length === 0) {
+                    tablo.innerHTML = "<tr><td colspan='4' style='text-align:center; padding:30px; color:#aaa;'>Henüz veri yok.</td></tr>";
+                    seviyeBadge.innerText = "Yeni Başlayan";
+                    return;
+                }
+
+                let toplamPuan = 0;
+                let maxPuan = 0;
+
+                raporlar.forEach(rapor => {
+                    toplamPuan += rapor.alinanPuan;
+                    if (rapor.alinanPuan > maxPuan) maxPuan = rapor.alinanPuan;
+
+                    const tarih = new Date(rapor.olusturulmaTarihi).toLocaleDateString('tr-TR');
+                    let renk = 'badge-low';
+                    if (rapor.alinanPuan >= 50) renk = 'badge-med';
+                    if (rapor.alinanPuan >= 80) renk = 'badge-high';
+
+                    const satir = `
+                        <tr>
+                            <td style="color:var(--text-muted);">${tarih}</td>
+                            <td style="font-weight:bold; color:var(--primary);">#${rapor.vakaID}</td>
+                            <td><span class="badge ${renk}">${rapor.alinanPuan}</span></td>
+                            <td style="text-align: right;">
+                                <button onclick='modalAc(${JSON.stringify(rapor).replace(/'/g, "&#39;")})' 
+                                        style="background:var(--primary); color:white; border:none; padding:6px 15px; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.85rem; transition:0.2s;">
+                                    <i class="fas fa-eye"></i> İncele
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tablo.innerHTML += satir;
+                });
+
+                const vakaSayisi = raporlar.length;
+                const ortalama = Math.round(toplamPuan / vakaSayisi);
+                toplamVakaEl.innerText = vakaSayisi;
+                ortalamaPuanEl.innerText = ortalama;
+                enYuksekEl.innerText = maxPuan;
+
+                if (ortalama >= 85) {
+                    seviyeBadge.innerHTML = '<i class="fas fa-crown"></i> Uzman Odyolog';
+                    seviyeBadge.className = "badge badge-high";
+                    seviyeBadge.style.background = "linear-gradient(135deg, #F59E0B, #D97706)";
+                } else if (ortalama >= 60) {
+                    seviyeBadge.innerText = "📚 Başarılı Öğrenci";
+                    seviyeBadge.className = "badge badge-med";
+                } else {
+                    seviyeBadge.innerText = "📝 Geliştirilmesi Gerek";
+                    seviyeBadge.className = "badge badge-low";
+                }
+
+            } catch (error) { console.error(error); }
+        });
+
+        // --- MODAL FONKSİYONLARI ---
+        function modalAc(rapor) {
+            const modal = document.getElementById('detayModal');
+            document.getElementById('modal-yorum').innerText = rapor.aiYorumu || "Yorum bulunamadı.";
+            document.getElementById('modal-rapor').innerText = rapor.raporMetni || "-";
+            document.getElementById('modal-puan').innerText = rapor.alinanPuan;
+
+            const idealAlani = document.getElementById('modal-ideal');
+            if (idealAlani) {
+                if (rapor.aiDogruCevap) {
+                    idealAlani.innerText = rapor.aiDogruCevap;
+                    idealAlani.style.display = "block";
+                    idealAlani.previousElementSibling.style.display = "block";
+                } else {
+                    idealAlani.style.display = "none";
+                    idealAlani.previousElementSibling.style.display = "none";
+                }
+            }
+            modal.style.display = "flex";
+        }
+
+        function modalKapat() {
+            document.getElementById('detayModal').style.display = "none";
+        }
+
+        window.onclick = function (event) {
+            const modal = document.getElementById('detayModal');
+            if (event.target == modal) modal.style.display = "none";
+        }
+
+        // --- ÇIKIŞ VE ONAY İŞLEMLERİ (Buraya Eklendi) ---
+        function showConfirm(mesaj, callback) {
+            const eski = document.querySelector('.confirm-overlay');
+            if (eski) eski.remove();
+
+            const overlay = document.createElement('div');
+            overlay.className = 'confirm-overlay';
+            overlay.innerHTML = `
+                <div class="confirm-box">
+                    <i class="fas fa-question-circle" style="font-size:3rem; color:#f59e0b; margin-bottom:15px; display:block;"></i>
+                    <h3 style="margin:0 0 10px 0; color:white;">Emin misiniz?</h3>
+                    <p style="color:#94a3b8; margin:0;">${mesaj}</p>
+                    <div class="confirm-buttons">
+                        <button class="btn-confirm-no" id="btn-iptal">Vazgeç</button>
+                        <button class="btn-confirm-yes" id="btn-onayla">Evet, Yap</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+
+            document.getElementById('btn-iptal').onclick = () => overlay.remove();
+            document.getElementById('btn-onayla').onclick = () => {
+                overlay.remove();
+                callback();
+            };
+        }
+
+        function cikisYap() {
+            showConfirm("Hesabınızdan çıkış yapılacak.", function () {
+                localStorage.clear();
+                window.location.href = '/login.html';
+            });
+        }
+
+        // ================= YENİ FONKSİYONLAR =================
+
+        // --- ROZETLERİ YÜKLE ---
+        async function rozetleriYukle() {
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch('/my-badges', { headers: { 'Authorization': token } });
+                const rozetler = await res.json();
+
+                const galeri = document.getElementById('rozet-galerisi');
+                if (!galeri) return;
+
+                if (!rozetler.length) {
+                    galeri.innerHTML = '<p style="color:#94a3b8;">Henüz rozet yok.</p>';
+                    return;
+                }
+
+                galeri.innerHTML = rozetler.map(r => `
+                    <div class="badge-item ${r.kazanildi ? '' : 'locked'}">
+                        <div class="badge-icon" style="background:${r.kazanildi ? r.color : '#475569'}20;">
+                            <i class="fas ${r.icon}" style="color:${r.kazanildi ? r.color : '#64748b'};"></i>
+                        </div>
+                        <h5>${r.name}</h5>
+                        <p>${r.description}</p>
+                    </div>
+                `).join('');
+            } catch (e) { console.log('Rozetler alınamadı'); }
+        }
+
+        // --- HAFTALIK GRAFİK YÜKLE ---
+        async function haftalikGrafikYukle() {
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch('/my-stats', { headers: { 'Authorization': token } });
+                const data = await res.json();
+
+                const grafik = document.getElementById('haftalik-grafik');
+                if (!grafik || !data.haftalik) return;
+
+                const maxVaka = Math.max(...data.haftalik.map(g => g.vakaSayisi), 1);
+
+                grafik.innerHTML = data.haftalik.map(gun => {
+                    const yukseklik = (gun.vakaSayisi / maxVaka) * 100;
+                    return `
+                        <div class="chart-bar-item">
+                            <div class="chart-bar" style="height:${Math.max(yukseklik, 5)}px;"></div>
+                            <span class="chart-bar-label">${gun.tarih}</span>
+                            <span style="font-size:0.7rem; color:var(--primary);">${gun.vakaSayisi}</span>
+                        </div>
+                    `;
+                }).join('');
+            } catch (e) { console.log('Grafik alınamadı'); }
+        }
+
+        // --- DAVET KODUNU GETİR ---
+        async function davetKoduGetir() {
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch('/my-referral-code', { headers: { 'Authorization': token } });
+                const data = await res.json();
+
+                const kodEl = document.getElementById('davet-kodu');
+                if (kodEl && data.code) {
+                    kodEl.textContent = data.code;
+                }
+            } catch (e) { console.log('Davet kodu alınamadı'); }
+        }
+
+        // --- KODU KOPYALA ---
+        function kodKopyala(btn) {
+            const kod = document.getElementById('davet-kodu').textContent;
+            navigator.clipboard.writeText(kod).then(() => {
+                // Buton feedback'i
+                if (btn) {
+                    btn.classList.add('copied');
+                    btn.innerHTML = '<i class="fas fa-check"></i> Kopyalandı!';
+
+                    setTimeout(() => {
+                        btn.classList.remove('copied');
+                        btn.innerHTML = '<i class="fas fa-copy"></i> Kopyala';
+                    }, 2000);
+                }
+            });
+        }
+
+        // --- WHATSAPP PAYLAŞ ---
+        function whatsappPaylas() {
+            const kod = document.getElementById('davet-kodu').textContent;
+            const mesaj = `OdyoCase'de benimle birlikte odyoloji öğren! Davet kodum: ${kod} 🎧 https://odyocase.com`;
+            const url = `https://wa.me/?text=${encodeURIComponent(mesaj)}`;
+            window.open(url, '_blank');
+        }
+
+        // --- YENİ FONKSİYONLARI ÇAĞIR ---
+        rozetleriYukle();
+        haftalikGrafikYukle();
+        davetKoduGetir();
+    </script>
+</body>
+
+</html>

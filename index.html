@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OdyoCase</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZQQ6H9JW12"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-ZQQ6H9JW12');
+    </script>
+    
+    <style>
+        /* ÖĞRENCİ EKRANI TAB STİLLERİ */
+        .student-tabs {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 15px;
+        }
+
+        .st-btn {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            padding: 10px 20px;
+            border-radius: 8px;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .st-btn.active {
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--primary);
+        }
+
+        .st-btn:hover:not(.active) {
+            color: white;
+        }
+
+        /* Simülasyon Kartı Özel Stili */
+        .sim-card {
+            border-left: 4px solid var(--secondary) !important;
+            background: linear-gradient(145deg, rgba(16, 185, 129, 0.05), rgba(30, 41, 59, 0.6));
+        }
+
+        .sim-badge {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* HOŞ GELDİN KARTI */
+        .welcome-card {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(16, 185, 129, 0.1));
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .welcome-text h2 {
+            margin: 0 0 5px 0;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .welcome-text p {
+            margin: 0;
+            color: #94a3b8;
+            font-size: 0.95rem;
+        }
+
+        /* CIRCULAR PROGRESS */
+        .progress-circle {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: conic-gradient(var(--secondary) var(--progress), rgba(255, 255, 255, 0.1) 0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .progress-circle::before {
+            content: '';
+            width: 75px;
+            height: 75px;
+            background: var(--bg-color);
+            border-radius: 50%;
+            position: absolute;
+        }
+
+        .progress-circle span {
+            position: relative;
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: white;
+        }
+
+        /* KONTROL ÇUBUĞU - Açılır Butonlar */
+        .control-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: #94a3b8;
+            padding: 10px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.2s;
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .control-btn.active {
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--primary);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+
+        .control-btn.practice-active {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--accent);
+            border-color: rgba(245, 158, 11, 0.3);
+        }
+
+        /* DROPDOWN PANELLERİ */
+        .dropdown-container {
+            position: relative;
+        }
+
+        .dropdown-panel {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            background: rgba(30, 41, 59, 0.98);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px;
+            z-index: 100;
+            min-width: 320px;
+            display: none;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+        }
+
+        .dropdown-panel.show {
+            display: block;
+            animation: fadeSlideDown 0.2s ease;
+        }
+
+        @keyframes fadeSlideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dropdown-panel input[type="text"] {
+            width: 100%;
+            height: 42px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+
+        .dropdown-panel select {
+            height: 42px;
+            margin-bottom: 10px;
+        }
+
+        .dropdown-panel .filter-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .dropdown-panel .filter-row select {
+            flex: 1;
+        }
+
+        .filter-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+            width: 100%;
+            margin-top: 5px;
+        }
+
+        .filter-btn:hover {
+            background: var(--primary-hover);
+        }
+
+        /* FAVORİ HEART */
+        .fav-btn {
+            background: transparent;
+            border: none;
+            color: #64748b;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: 0.2s;
+            padding: 5px;
+        }
+
+        .fav-btn:hover {
+            color: #f43f5e;
+            transform: scale(1.2);
+        }
+
+        .fav-btn.active {
+            color: #f43f5e;
+        }
+
+        /* PRATİK MODU DROPDOWN */
+        .practice-panel {
+            min-width: 280px;
+        }
+
+        .practice-panel .practice-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(245, 158, 11, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 26px;
+            flex-shrink: 0;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #475569;
+            border-radius: 26px;
+            transition: 0.3s;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background: white;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+
+        .toggle-switch input:checked+.toggle-slider {
+            background: var(--accent);
+        }
+
+        .toggle-switch input:checked+.toggle-slider:before {
+            transform: translateX(24px);
+        }
+
+        /* LİDERLİK TABLOSU - Minimal Açılır Panel */
+        .leaderboard-toggle-btn {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            color: var(--accent);
+            padding: 10px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.2s;
+            margin-left: auto;
+        }
+
+        .leaderboard-toggle-btn:hover {
+            background: rgba(245, 158, 11, 0.2);
+        }
+
+        .leaderboard-dropdown {
+            right: 0;
+            left: auto;
+            min-width: 350px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .leaderboard-dropdown h4 {
+            margin: 0 0 15px 0;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1rem;
+        }
+
+        .leaderboard-dropdown table {
+            width: 100%;
+            font-size: 0.85rem;
+        }
+
+        .leaderboard-dropdown th,
+        .leaderboard-dropdown td {
+            padding: 8px 10px;
+        }
+
+        /* YARDIM BUTONU */
+        .help-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(59, 130, 246, 0.4);
+            z-index: 99;
+            transition: 0.3s;
+        }
+
+        .help-btn:hover {
+            transform: scale(1.1);
+        }
+
+        /* TARTIŞMA BÖLÜMÜ */
+        .discussion-section {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .discussion-section h4 {
+            margin: 0 0 15px 0;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .discussion-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .discussion-item {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .discussion-item strong {
+            color: var(--primary);
+            font-size: 0.9rem;
+        }
+
+        .discussion-item small {
+            color: #64748b;
+            margin-left: 10px;
+        }
+
+        .discussion-item p {
+            margin: 8px 0 0 0;
+            color: #e2e8f0;
+            font-size: 0.95rem;
+        }
+
+        .discussion-input {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .discussion-input textarea {
+            flex: 1;
+            height: 60px;
+            margin: 0;
+            resize: none;
+        }
+
+        .discussion-input button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        /* NOT ALANI */
+        .notes-section {
+            background: rgba(16, 185, 129, 0.05);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .notes-section label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--secondary);
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .notes-section textarea {
+            height: 80px;
+            margin: 0;
+        }
+
+        .notes-section button {
+            margin-top: 10px;
+            background: var(--secondary);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <a href="/" style="display: flex; align-items: center; text-decoration: none; gap: 0;">
+            <svg width="34" height="34" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg"
+                style="margin-right: -1px;">
+                <circle cx="25" cy="25" r="20" stroke="url(#gradO)" stroke-width="7" />
+                <path d="M18 22V28" stroke="white" stroke-width="3" stroke-linecap="round" />
+                <path d="M25 17V33" stroke="white" stroke-width="3" stroke-linecap="round" />
+                <path d="M32 22V28" stroke="white" stroke-width="3" stroke-linecap="round" />
+                <defs>
+                    <linearGradient id="gradO" x1="0" y1="0" x2="50" y2="50" gradientUnits="userSpaceOnUse">
+                        <stop stop-color="#3b82f6" />
+                        <stop offset="1" stop-color="#1e40af" />
+                    </linearGradient>
+                </defs>
+            </svg>
+            <span
+                style="font-size: 1.6rem; font-weight: 700; color: #fff; letter-spacing: -0.5px; line-height: 1;">dyo<span
+                    style="color: #3b82f6;">Case</span></span>
+        </a>
+        <div>
+            <a id="admin-btn" href="/admin.html" style="display:none;"><i class="fas fa-screwdriver-wrench"></i>
+                Admin</a>
+            <a id="btn-profil" href="/profil.html" class="nav-profil"><i class="fas fa-user-circle"></i> Profilim</a>
+            <button id="btn-cikis" onclick="cikisYap()" class="nav-cikis"><i class="fas fa-sign-out-alt"></i>
+                Çıkış</button>
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <div id="liste-ekrani">
+
+            <!-- HOŞ GELDİN KARTI -->
+            <div class="welcome-card">
+                <div class="welcome-text">
+                    <h2>👋 Merhaba, <span id="hosgeldin-isim">Öğrenci</span>!</h2>
+                    <p id="motivasyon-soz">Bugün yeni bir vaka çözmeye ne dersin?</p>
+                </div>
+                <div style="display:flex; align-items:center; gap:20px;">
+                    <div class="progress-circle" style="--progress: 0%;">
+                        <span id="ilerleme-yazi">0/0</span>
+                    </div>
+                    <div style="text-align:center;">
+                        <div style="font-size:0.8rem; color:#94a3b8;">Tamamlanan</div>
+                        <div style="font-size:0.8rem; color:#94a3b8;">Vakalar</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KONTROL ÇUBUĞU - Açılır Butonlar -->
+            <div class="control-bar">
+                <!-- ARAMA BUTONU -->
+                <div class="dropdown-container">
+                    <button class="control-btn" id="search-toggle-btn" onclick="toggleDropdown('search-dropdown')">
+                        <i class="fas fa-search"></i> Ara & Filtrele
+                    </button>
+                    <div class="dropdown-panel" id="search-dropdown">
+                        <input type="text" id="arama-input" placeholder="Vaka ara...">
+                        <div class="filter-row">
+                            <select id="zorluk-filtre">
+                                <option value="Tümü">Tüm Zorluklar</option>
+                                <option value="Kolay">Kolay</option>
+                                <option value="Orta">Orta</option>
+                                <option value="Zor">Zor</option>
+                            </select>
+                            <select id="siralama-filtre">
+                                <option value="yeni">En Yeni</option>
+                                <option value="eski">En Eski</option>
+                                <option value="az">A-Z</option>
+                            </select>
+                        </div>
+                        <button class="filter-btn" onclick="vakalariFiltrele(); toggleDropdown('search-dropdown');">
+                            <i class="fas fa-filter"></i> Filtrele
+                        </button>
+                    </div>
+                </div>
+
+                <!-- PRATİK MODU BUTONU -->
+                <div class="dropdown-container">
+                    <button class="control-btn" id="practice-toggle-btn" onclick="toggleDropdown('practice-dropdown')">
+                        <i class="fas fa-dumbbell"></i> Pratik Modu
+                    </button>
+                    <div class="dropdown-panel practice-panel" id="practice-dropdown">
+                        <div class="practice-info">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="pratik-modu" onchange="updatePracticeButtonStyle()">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <div>
+                                <div style="color:#f59e0b; font-weight:600; font-size:0.95rem;">Pratik Modu</div>
+                                <div style="color:#94a3b8; font-size:0.8rem;">Zamanlayıcı kapalı, puan kayıt edilmez
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RASTGELE VAKA BUTONU -->
+                <button class="control-btn" onclick="rastgeleVaka()"
+                    style="background: linear-gradient(135deg, #f59e0b22, #ef444422); border-color: #f59e0b44;">
+                    <i class="fas fa-dice"></i> Rastgele Vaka
+                </button>
+
+                <!-- LİDERLİK TABLOSU BUTONU -->
+                <div class="dropdown-container" style="margin-left: auto;">
+                    <button class="leaderboard-toggle-btn" onclick="toggleDropdown('leaderboard-dropdown')">
+                        <i class="fas fa-trophy"></i> <span id="top-score-preview">Liderlik</span>
+                    </button>
+                    <div class="dropdown-panel leaderboard-dropdown" id="leaderboard-dropdown">
+                        <h4><i class="fas fa-trophy" style="color:var(--accent)"></i> Liderlik Tablosu</h4>
+                        <table id="liderlik-tablosu">
+                            <thead>
+                                <tr>
+                                    <th>Sıra</th>
+                                    <th>Öğrenci</th>
+                                    <th>Çözülen</th>
+                                    <th style="text-align:right;">Puan</th>
+                                </tr>
+                            </thead>
+                            <tbody id="liderlik-body">
+                                <tr>
+                                    <td colspan="4">Yükleniyor...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="student-tabs">
+                <button class="st-btn active" onclick="tabDegistir('klasik')">
+                    <i class="fas fa-folder-open"></i> Vaka Çalışmaları
+                </button>
+                <button class="st-btn" onclick="tabDegistir('simulasyon')">
+                    <i class="fas fa-user-md"></i> Simülasyon Merkezi
+                </button>
+                <a href="/odyometri.html" class="st-btn" style="text-decoration:none; color:#94a3b8;">
+                    <i class="fas fa-wave-square"></i> Odyometri Simülasyonu
+                </a>
+            </div>
+
+            <div id="klasik-vaka-listesi">
+                <p>Vakalar yükleniyor...</p>
+            </div>
+
+            <div id="simulasyon-listesi" style="display:none;">
+                <p>Simülasyonlar yükleniyor...</p>
+            </div>
+
+            <div class="card"
+                style="margin-top: 30px; border-left: 5px solid var(--accent); background: rgba(245, 158, 11, 0.1);">
+                <h3
+                    style="margin-top:0; color:var(--text-main); display:flex; align-items:center; gap:10px; font-size:1.2rem;">
+                    <i class="fas fa-bullhorn" style="color:var(--accent);"></i> Bize Fikrini Söyle
+                </h3>
+                <textarea id="feedback-mesaj" rows="2" placeholder="Sistemde bir hata mı var? Buradan yazabilirsin..."
+                    style="background: rgba(0,0,0,0.2); border:1px solid var(--border-color); color:white; width:100%; box-sizing:border-box; margin-top:10px;"></textarea>
+                <div style="display:flex; justify-content:flex-end; margin-top:10px;">
+                    <button id="feedback-btn"
+                        style="background: var(--accent); color: white; border: none; padding: 8px 20px; border-radius: 8px; font-weight: bold; cursor: pointer;">
+                        Gönder
+                    </button>
+                </div>
+                <span id="feedback-sonuc"
+                    style="font-weight: 600; font-size:0.9rem; display:block; margin-top:5px; text-align:right;"></span>
+            </div>
+        </div>
+
+        <div id="detay-ekrani" style="display: none;">
+            <button onclick="listeyeDon()" class="btn-back-list"><i class="fas fa-arrow-left"></i> Listeye Dön</button>
+            <div class="vaka-header-row">
+                <div style="flex: 1;">
+                    <h2 id="detay-baslik" style="margin:0; font-size:1.8rem; color:var(--primary);">...</h2>
+                    <span id="detay-zorluk" class="zorluk-etiketi">--</span>
+                </div>
+                <div id="sayac-kutusu">⏳ <span id="zaman">00:00</span></div>
+            </div>
+            <div style="text-align: center;"><img id="detay-resim" src=""
+                    style="width: 100%; max-height: 400px; object-fit: contain; margin-bottom: 25px; border-radius:12px; display: none;">
+            </div>
+            <div
+                style="background: rgba(59, 130, 246, 0.1); padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid var(--primary); display: flex; gap: 30px; align-items: center;">
+                <div><span style="font-weight:bold; color:var(--text-muted); font-size:0.8rem;">YAŞ</span>
+                    <div id="detay-yas" style="font-weight:bold; font-size:1.2rem; color:var(--text-main);">--</div>
+                </div>
+                <div><span style="font-weight:bold; color:var(--text-muted); font-size:0.8rem;">CİNSİYET</span>
+                    <div id="detay-cinsiyet" style="font-weight:bold; font-size:1.2rem; color:var(--text-main);">--
+                    </div>
+                </div>
+            </div>
+            <div class="card" style="background: rgba(0,0,0,0.2); border:none;">
+                <p id="detay-icerik" style="font-size: 1.1rem; color: #e2e8f0; line-height: 1.8;"></p>
+            </div>
+            <hr style="margin: 30px 0; border: 0; border-top: 1px solid var(--border-color);">
+            <h3 style="margin-bottom:15px; color:var(--text-main);"><i class="fas fa-user-md"></i> Klinik
+                Değerlendirmeniz</h3>
+            <textarea id="rapor-alani" rows="8" placeholder="Tanı ve bulgularınızı yazın..."></textarea>
+            <button id="gonder-butonu"><i class="fas fa-paper-plane"></i> Analiz İçin Gönder</button>
+            <p id="sonuc-mesaji" style="margin-top: 20px;"></p>
+
+            <!-- NOT BÖLÜMÜ -->
+            <div class="notes-section">
+                <label><i class="fas fa-sticky-note"></i> Kişisel Notlarım</label>
+                <textarea id="not-alani" placeholder="Bu vaka hakkında notlarınızı buraya yazın..."></textarea>
+                <button onclick="notuKaydet()"><i class="fas fa-save"></i> Notu Kaydet</button>
+            </div>
+
+            <!-- TARTIŞMA BÖLÜMÜ (Çözülen vakalar için) -->
+            <div class="discussion-section" id="tartisma-bolumu" style="display:none;">
+                <h4><i class="fas fa-comments"></i> Vaka Tartışması</h4>
+                <div class="discussion-list" id="tartisma-listesi">
+                    <p style="color:#94a3b8;">Henüz yorum yok.</p>
+                </div>
+                <div class="discussion-input">
+                    <textarea id="tartisma-input" placeholder="Görüşünüzü paylaşın..."></textarea>
+                    <button onclick="yorumGonder()"><i class="fas fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="baslangicModal" class="confirm-overlay" style="display:none;">
+        <div class="confirm-box" style="max-width: 500px; text-align: left; padding:30px;">
+
+            <div style="text-align:center; margin-bottom:20px;">
+                <div
+                    style="width:80px; height:80px; background:rgba(59,130,246,0.1); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto; box-shadow:0 0 20px rgba(59,130,246,0.2);">
+                    <i class="fas fa-play" style="font-size:2.5rem; color:var(--primary); margin-left:5px;"></i>
+                </div>
+            </div>
+
+            <h2 style="color:white; text-align:center; margin-top:0; margin-bottom:10px;">Vakayı İncelemeye Hazır mısın?
+            </h2>
+            <p style="text-align:center; color:#94a3b8; margin-bottom:25px; font-size:0.95rem;">"Başla" dediğin an süre
+                işlemeye başlayacak.</p>
+
+            <div
+                style="background:rgba(255,255,255,0.05); padding:20px; border-radius:12px; margin-bottom:25px; color:#e2e8f0; font-size:0.95rem; border:1px solid rgba(255,255,255,0.1);">
+
+                <div style="display:flex; align-items:center; gap:15px; margin-bottom:15px;">
+                    <div
+                        style="background:rgba(245,158,11,0.1); width:35px; height:35px; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+                        <i class="fas fa-stopwatch" style="color:var(--accent);"></i>
+                    </div>
+                    <span>Bu vaka için süren: <strong id="modal-sure-bilgisi" style="color:var(--accent);">--
+                            Dakika</strong></span>
+                </div>
+
+                <div style="display:flex; align-items:center; gap:15px; margin-bottom:15px;">
+                    <div
+                        style="background:rgba(59,130,246,0.1); width:35px; height:35px; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+                        <i class="fas fa-search" style="color:var(--primary);"></i>
+                    </div>
+                    <span>Hikayeyi oku, bulguları dikkatle incele.</span>
+                </div>
+
+                <div style="display:flex; align-items:center; gap:15px;">
+                    <div
+                        style="background:rgba(16,185,129,0.1); width:35px; height:35px; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+                        <i class="fas fa-file-medical" style="color:var(--secondary);"></i>
+                    </div>
+                    <span>Tanı ve tedavi planını raporla.</span>
+                </div>
+
+            </div>
+
+            <button id="btn-vaka-baslat" class="btn-confirm-yes"
+                style="width:100%; padding:15px; font-size:1.1rem; background:linear-gradient(135deg, var(--primary), var(--primary-hover)); box-shadow:0 10px 20px rgba(59, 130, 246, 0.3); border:none; cursor:pointer; font-weight:bold; color:white; border-radius:10px;">
+                <i class="fas fa-rocket" style="margin-right:8px;"></i> Muayeneye Başla
+            </button>
+
+            <button onclick="baslangicIptal()"
+                style="background:transparent; border:none; color:#64748b; width:100%; margin-top:15px; cursor:pointer; font-weight:600; transition:0.3s;">
+                Vazgeç ve Listeye Dön
+            </button>
+        </div>
+    </div>
+
+    <!-- YARDIM BUTONU -->
+    <button class="help-btn" onclick="yardimModalAc()" title="Nasıl Kullanılır?">
+        <i class="fas fa-question"></i>
+    </button>
+
+    <!-- YARDIM MODAL -->
+    <div id="yardimModal" class="confirm-overlay" style="display:none;">
+        <div class="confirm-box"
+            style="max-width: 600px; text-align: left; padding:30px; max-height: 80vh; overflow-y: auto;">
+            <h2 style="color:white; text-align:center; margin-top:0;">
+                <i class="fas fa-book-open" style="color:var(--primary);"></i> Nasıl Kullanılır?
+            </h2>
+
+            <div style="margin-top:20px;">
+                <h4 style="color:var(--secondary); margin-bottom:10px;"><i class="fas fa-folder-open"></i> Vaka
+                    Çalışmaları</h4>
+                <p style="color:#94a3b8; font-size:0.9rem; margin:0 0 15px 0;">
+                    Klasik vakalar üzerinde pratik yapın. Vakayı okuyun, analiz edin ve tanınızı yazın. AI size anında
+                    geri bildirim verecek.
+                </p>
+
+                <h4 style="color:var(--secondary); margin-bottom:10px;"><i class="fas fa-user-md"></i> Simülasyon
+                    Merkezi</h4>
+                <p style="color:#94a3b8; font-size:0.9rem; margin:0 0 15px 0;">
+                    Gerçek klinik senaryolarda testleri sırayla seçerek tanıya ulaşın. Doğru test sırası puanınızı
+                    etkiler!
+                </p>
+
+                <h4 style="color:var(--accent); margin-bottom:10px;"><i class="fas fa-stopwatch"></i> Pratik Modu</h4>
+                <p style="color:#94a3b8; font-size:0.9rem; margin:0 0 15px 0;">
+                    Zamanlayıcı olmadan çalışmak mı istiyorsunuz? "Pratik Modu"nu açın. Puanlar kayıt edilmez ama
+                    rahatça öğrenirsiniz.
+                </p>
+
+                <h4 style="color:#f43f5e; margin-bottom:10px;"><i class="fas fa-heart"></i> Favoriler</h4>
+                <p style="color:#94a3b8; font-size:0.9rem; margin:0 0 15px 0;">
+                    Zorlayıcı veya önemli bulduğunuz vakaların kalp ikonuna tıklayarak favorilere ekleyin.
+                </p>
+
+                <h4 style="color:var(--primary); margin-bottom:10px;"><i class="fas fa-sticky-note"></i> Kişisel Notlar
+                </h4>
+                <p style="color:#94a3b8; font-size:0.9rem; margin:0;">
+                    Her vaka için kendi notlarınızı tutabilirsiniz. Sadece siz görürsünüz!
+                </p>
+            </div>
+
+            <button onclick="yardimModalKapat()" class="modal-close-btn">
+                <i class="fas fa-check-circle"></i> Anladım, Kapat
+            </button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
