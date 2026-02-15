@@ -9,33 +9,15 @@ const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 require('dotenv').config();
 
-// --- 1. ADIM: ZOHO AYARLARI (GÜNCELLENDİ) ---
-const transporter = nodemailer.createTransport({
-    host: "smtp.zoho.eu",   // .com.tr domainler Zoho EU üzerinde çalışır
-    port: 465,              // Güvenli port
-    secure: true,           // SSL kullanıyoruz
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    }
-});
+// --- E-POSTA AYARLARI (RESEND) ---
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Transporter bağlantı testi
-transporter.verify((error, success) => {
-    if (error) {
-        console.error('📧 E-posta bağlantı hatası:', error.message);
-    } else {
-        console.log('✅ E-posta sistemi hazır (Zoho EU)');
-    }
-});
-
-// --- 2. ADIM: TOPLU MAIL FONKSİYONU (AYNEN KORUNDU) ---
+// Tüm kullanıcılara toplu e-posta gönder
 async function sendEmailToAll(subject, htmlContent) {
     try {
-        // Veritabanından mailleri çekiyoruz
         const users = await UserModel.find({ email: { $ne: null, $exists: true } }).select('email');
         const emails = users.map(u => u.email).filter(Boolean);
 
@@ -44,10 +26,10 @@ async function sendEmailToAll(subject, htmlContent) {
             return { success: false, message: 'Kayıtlı e-posta adresi yok.' };
         }
 
-        // Maili gönderiyoruz
-        await transporter.sendMail({
-            from: `"OdyoCase Bildirim" <${process.env.EMAIL_USER}>`, // Gönderen kısmı
-            bcc: emails, // Gizli kopya (Herkes birbirini görmesin diye BCC kullanıyoruz, bu çok doğru!)
+        // Resend ile gönder
+        const { data, error } = await resend.emails.send({
+            from: 'OdyoCase <noreply@odyocase.com.tr>',
+            bcc: emails,
             subject: subject,
             html: `
                 <div style="font-family: 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto; background: #0f172a; color: #e2e8f0; border-radius: 16px; overflow: hidden;">
@@ -64,7 +46,12 @@ async function sendEmailToAll(subject, htmlContent) {
             `
         });
 
-        console.log(`📧 ${emails.length} kullanıcıya e-posta başarıyla gönderildi.`);
+        if (error) {
+            console.error('📧 E-posta gönderim hatası:', error);
+            return { success: false, message: error.message };
+        }
+
+        console.log(`📧 ${emails.length} kullanıcıya e-posta gönderildi. ID: ${data.id}`);
         return { success: true, count: emails.length };
 
     } catch (error) {
