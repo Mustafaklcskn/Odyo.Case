@@ -236,10 +236,21 @@ const verifyToken = (req, res, next) => {
     const token = req.headers["authorization"];
     if (!token) return res.status(403).json({ success: false, message: "Giriş yapmanız gerekiyor!" });
     try {
-        const decoded = jwt.verify(token, "GIZLI_KELIME");
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
         req.user = decoded;
         next();
     } catch (error) { return res.status(401).json({ success: false, message: "Geçersiz Token!" }); }
+};
+
+// Admin yetki kontrolü middleware
+const verifyAdmin = async (req, res, next) => {
+    try {
+        const user = await UserModel.findOne({ username: req.user.username });
+        if (!user || !user.isAdmin) {
+            return res.status(403).json({ success: false, message: "Yetkiniz yok!" });
+        }
+        next();
+    } catch (error) { return res.status(500).json({ success: false, message: "Sunucu hatası." }); }
 };
 
 // ================= ROTALAR =================
@@ -248,8 +259,6 @@ app.get('/login.html', (req, res) => res.sendFile(path.join(__dirname, 'login.ht
 app.get('/register.html', (req, res) => res.sendFile(path.join(__dirname, 'register.html')));
 app.get('/profil.html', (req, res) => res.sendFile(path.join(__dirname, 'profil.html')));
 app.get('/admin.html', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
-// Yeni Simülasyon Sayfası için route (Henüz oluşturmadık ama hazır olsun)
-app.get('/simulasyon.html', (req, res) => res.sendFile(path.join(__dirname, 'simulasyon.html')));
 
 app.get('/check-version', async (req, res) => {
     try {
@@ -309,7 +318,7 @@ app.post('/login', async (req, res) => {
         if (!user) return res.status(400).json({ success: false, message: "Kullanıcı bulunamadı!" });
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(400).json({ success: false, message: "Şifre hatalı!" });
-        const token = jwt.sign({ id: user._id, username: user.username }, "GIZLI_KELIME", { expiresIn: "24h" });
+        const token = jwt.sign({ id: user._id, username: user.username }, process.env.JWT_SECRET, { expiresIn: "24h" });
         res.json({ success: true, message: "Giriş başarılı!", token: token, username: user.username, school: user.school, isAdmin: user.isAdmin });
     } catch (error) { res.status(500).json({ success: false, message: "Sunucu hatası." }); }
 });
@@ -349,7 +358,7 @@ app.post('/reset-password', async (req, res) => {
 });
 
 // --- KLASİK VAKA İŞLEMLERİ (MEVCUT) ---
-app.post('/admin/add-case', upload.single('vakaResmi'), async (req, res) => {
+app.post('/admin/add-case', verifyToken, verifyAdmin, upload.single('vakaResmi'), async (req, res) => {
     const resimYolu = req.file ? '/uploads/' + req.file.filename : null;
     const { baslik, yas, cinsiyet, gizliTani, icerik, zorluk } = req.body;
     try {
@@ -363,7 +372,7 @@ app.post('/admin/add-case', upload.single('vakaResmi'), async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, message: "Hata oluştu." }); }
 });
 
-app.delete('/admin/delete-case/:no', async (req, res) => {
+app.delete('/admin/delete-case/:no', verifyToken, verifyAdmin, async (req, res) => {
     try {
         const silinen = await VakaModel.findOneAndDelete({ vakaNo: req.params.no });
         if (silinen) {
@@ -377,11 +386,11 @@ app.get('/cases', async (req, res) => {
     try { const vakalar = await VakaModel.find().select('-gizliTani'); res.json(vakalar); } catch (error) { res.status(500).json({ error: "Hata." }); }
 });
 
-app.get('/admin/case/:no', async (req, res) => {
+app.get('/admin/case/:no', verifyToken, verifyAdmin, async (req, res) => {
     try { const vaka = await VakaModel.findOne({ vakaNo: req.params.no }); res.json({ success: true, vaka }); } catch (error) { res.status(500).json({ error: "Hata." }); }
 });
 
-app.put('/admin/update-case/:no', upload.single('vakaResmi'), async (req, res) => {
+app.put('/admin/update-case/:no', verifyToken, verifyAdmin, upload.single('vakaResmi'), async (req, res) => {
     const { baslik, yas, cinsiyet, gizliTani, icerik, zorluk } = req.body;
     const resimYolu = req.file ? '/uploads/' + req.file.filename : undefined;
     try {
@@ -398,7 +407,7 @@ app.put('/admin/update-case/:no', upload.single('vakaResmi'), async (req, res) =
 // --- YENİ: SİMÜLASYON İŞLEMLERİ ---
 
 // 1. Simülasyon Ekle (Admin)
-app.post('/admin/add-simulation', async (req, res) => {
+app.post('/admin/add-simulation', verifyToken, verifyAdmin, async (req, res) => {
     // Tüm alanları body'den alıyoruz (req.body içindeki her şeyi modele gönderir)
     // Bu yöntem (spread operator) daha pratiktir, tek tek yazmaya gerek kalmaz.
     try {
@@ -597,12 +606,12 @@ app.post('/submit-feedback', verifyToken, async (req, res) => {
     } catch (error) { res.status(500).json({ success: false }); }
 });
 
-app.get('/admin/feedbacks', async (req, res) => { try { const f = await FeedbackModel.find().sort({ tarih: -1 }); res.json(f); } catch (e) { res.status(500).json({}); } });
-app.put('/admin/toggle-feedback/:id', async (req, res) => { try { const f = await FeedbackModel.findById(req.params.id); f.okundu = !f.okundu; await f.save(); res.json({ success: true, yeniDurum: f.okundu }); } catch (e) { res.status(500).json({ success: false }); } });
-app.delete('/admin/delete-feedback/:id', async (req, res) => { try { await FeedbackModel.findByIdAndDelete(req.params.id); res.json({ success: true }); } catch (e) { res.status(500).json({ success: false }); } });
+app.get('/admin/feedbacks', verifyToken, verifyAdmin, async (req, res) => { try { const f = await FeedbackModel.find().sort({ tarih: -1 }); res.json(f); } catch (e) { res.status(500).json({}); } });
+app.put('/admin/toggle-feedback/:id', verifyToken, verifyAdmin, async (req, res) => { try { const f = await FeedbackModel.findById(req.params.id); f.okundu = !f.okundu; await f.save(); res.json({ success: true, yeniDurum: f.okundu }); } catch (e) { res.status(500).json({ success: false }); } });
+app.delete('/admin/delete-feedback/:id', verifyToken, verifyAdmin, async (req, res) => { try { await FeedbackModel.findByIdAndDelete(req.params.id); res.json({ success: true }); } catch (e) { res.status(500).json({ success: false }); } });
 
 // --- YENİ: SİMÜLASYON GÜNCELLEME (ADMİN İÇİN) ---
-app.put('/admin/update-simulation/:no', async (req, res) => {
+app.put('/admin/update-simulation/:no', verifyToken, verifyAdmin, async (req, res) => {
     try {
         const updated = await SimulasyonModel.findOneAndUpdate(
             { simNo: req.params.no },
@@ -614,6 +623,19 @@ app.put('/admin/update-simulation/:no', async (req, res) => {
             res.json({ success: true, message: "Güncellendi." });
         } else res.status(404).json({ success: false });
     } catch (error) { res.status(500).json({ success: false }); }
+});
+
+// --- SİMÜLASYON SİLME (ADMİN İÇİN) ---
+app.delete('/admin/delete-simulation/:no', verifyToken, verifyAdmin, async (req, res) => {
+    try {
+        const silinen = await SimulasyonModel.findOneAndDelete({ simNo: req.params.no });
+        if (silinen) {
+            await triggerSiteUpdate(`🗑️ Simülasyon #${req.params.no} silindi.`);
+            res.json({ success: true, message: "Simülasyon silindi." });
+        } else {
+            res.status(404).json({ success: false, message: "Simülasyon bulunamadı." });
+        }
+    } catch (error) { res.status(500).json({ success: false, message: "Hata oluştu." }); }
 });
 
 // ================= YENİ ÖZELLİKLER =================
@@ -1066,7 +1088,7 @@ app.post('/refresh-token', verifyToken, async (req, res) => {
         // Mevcut token geçerliyse yeni token üret
         const newToken = jwt.sign(
             { id: req.user.id, username: req.user.username },
-            "GIZLI_KELIME",
+            process.env.JWT_SECRET,
             { expiresIn: "24h" } // 24 saat
         );
         res.json({ success: true, token: newToken });
@@ -1076,7 +1098,7 @@ app.post('/refresh-token', verifyToken, async (req, res) => {
 });
 
 // --- ADMİN BİLDİRİM GÖNDERİMİ ---
-app.post('/admin/send-notification', async (req, res) => {
+app.post('/admin/send-notification', verifyToken, verifyAdmin, async (req, res) => {
     try {
         const { subject, message } = req.body;
         if (!subject || !message) {

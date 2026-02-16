@@ -66,6 +66,15 @@ document.addEventListener("DOMContentLoaded", function () {
     // Global window'a ekle (diğer scriptlerde kullanılabilsin)
     window.apiRequest = apiRequest;
 
+    // XSS koruması için HTML escape
+    function safeHTML(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+    window.safeHTML = safeHTML;
+
     // 1. GİRİŞ KONTROLÜ
     const token = localStorage.getItem('token');
     const isAdmin = localStorage.getItem('isAdmin');
@@ -118,9 +127,9 @@ document.addEventListener("DOMContentLoaded", function () {
     favorileriGetir();
 
     // --- TAB SİSTEMİ ---
-    window.tabDegistir = function (mod) {
+    window.tabDegistir = function (mod, e) {
         document.querySelectorAll('.st-btn').forEach(btn => btn.classList.remove('active'));
-        event.currentTarget.classList.add('active');
+        if (e && e.currentTarget) e.currentTarget.classList.add('active');
 
         if (mod === 'klasik') {
             klasikListeDiv.style.display = 'block';
@@ -269,7 +278,7 @@ document.addEventListener("DOMContentLoaded", function () {
             d.forEach((k, i) => {
                 let madalya = "";
                 if (i === 0) madalya = "🥇"; else if (i === 1) madalya = "🥈"; else if (i === 2) madalya = "🥉";
-                liderlikBody.innerHTML += `<tr><td>${i + 1} ${madalya}</td><td><strong style="text-transform: capitalize;">${k._id}</strong></td><td>${k.cozulenVakaSayisi}</td><td style="text-align:right; font-weight:bold; color:var(--accent);">${k.toplamPuan}</td></tr>`;
+                liderlikBody.innerHTML += `<tr><td>${i + 1} ${madalya}</td><td><strong style="text-transform: capitalize;">${safeHTML(k._id)}</strong></td><td>${k.cozulenVakaSayisi}</td><td style="text-align:right; font-weight:bold; color:var(--accent);">${k.toplamPuan}</td></tr>`;
             });
         }
     });
@@ -419,6 +428,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 gonderButonu.innerHTML = 'Tamamlandı';
                 cozulmusVakalar.push(seciliVakaID);
                 if (sayacInterval) clearInterval(sayacInterval);
+                rozetKontrol(); // Rozet kazanma kontrolü
             } else {
                 sonucMesaji.innerHTML = `<span style="color:var(--danger)">${data.message}</span>`;
                 gonderButonu.disabled = false;
@@ -696,10 +706,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 return `
                 <div class="discussion-item" data-id="${y._id}">
                     <div class="discussion-header">
-                        <strong>@${y.username}</strong>
+                        <strong>@${safeHTML(y.username)}</strong>
                         <small>${new Date(y.createdAt).toLocaleDateString('tr-TR')}</small>
                     </div>
-                    <p>${y.text}</p>
+                    <p>${safeHTML(y.text)}</p>
                     <div class="discussion-actions">
                         <button class="like-btn ${isLiked ? 'liked' : ''}" onclick="yorumBegen('${y._id}', ${vakaID})">
                             <i class="${isLiked ? 'fas' : 'far'} fa-heart"></i>
@@ -723,9 +733,9 @@ document.addEventListener("DOMContentLoaded", function () {
                         <div class="replies-container">
                             ${y.replies.map(r => `
                                 <div class="discussion-reply">
-                                    <strong>@${r.username}</strong>
+                                    <strong>@${safeHTML(r.username)}</strong>
                                     <small>${new Date(r.createdAt).toLocaleDateString('tr-TR')}</small>
-                                    <p>${r.text}</p>
+                                    <p>${safeHTML(r.text)}</p>
                                 </div>
                             `).join('')}
                         </div>

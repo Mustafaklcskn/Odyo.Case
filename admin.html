@@ -120,10 +120,10 @@
 
         <div class="card">
             <div class="mode-tabs">
-                <button class="tab-btn active" onclick="modDegistir('klasik')">
+                <button class="tab-btn active" onclick="modDegistir('klasik', event)">
                     <i class="fas fa-folder"></i> Klasik Vaka Ekle
                 </button>
-                <button class="tab-btn" onclick="modDegistir('simulasyon')">
+                <button class="tab-btn" onclick="modDegistir('simulasyon', event)">
                     <i class="fas fa-user-md"></i> Klinik Simülasyon Ekle
                 </button>
             </div>
@@ -257,6 +257,24 @@
         let aktifMod = 'klasik'; // 'klasik' veya 'simulasyon'
         let duzenlemeModu = false;
         let seciliId = null;
+        const adminToken = localStorage.getItem('token');
+
+        // Auth header'lı fetch yardımcısı
+        function adminFetch(url, options = {}) {
+            options.headers = {
+                ...options.headers,
+                'Authorization': adminToken
+            };
+            return fetch(url, options);
+        }
+
+        // XSS koruması
+        function safeHTML(str) {
+            if (!str) return '';
+            const d = document.createElement('div');
+            d.textContent = str;
+            return d.innerHTML;
+        }
 
         // --- BİLDİRİM VE ONAY FONKSİYONLARI ---
         function showToast(mesaj, tip = 'info') {
@@ -283,13 +301,13 @@
         });
 
         // --- MOD DEĞİŞTİRME ---
-        function modDegistir(mod) {
+        function modDegistir(mod, e) {
             aktifMod = mod;
             formuSifirla(); // Mod değişince formu temizle
 
             // Tab Stilleri
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            event.currentTarget.classList.add('active');
+            if (e && e.currentTarget) e.currentTarget.classList.add('active');
 
             // Form Göster/Gizle
             document.getElementById('form-klasik').style.display = (mod === 'klasik') ? 'block' : 'none';
@@ -327,7 +345,7 @@
             try {
                 // Hangi moddaysak ona göre veri çek
                 const url = (aktifMod === 'klasik') ? `/admin/case/${id}` : `/simulation/${id}`;
-                const res = await fetch(url);
+                const res = await adminFetch(url);
                 const data = await res.json();
 
                 if (data.success) {
@@ -351,6 +369,16 @@
                         document.getElementById('sim-timpano').value = veri.timpanometri;
                         document.getElementById('sim-refleks').value = veri.refleks;
                         document.getElementById('sim-konusma').value = veri.konusma;
+                        document.getElementById('sim-yuksekfrekans').value = veri.yuksekFrekans || '';
+                        document.getElementById('sim-tonedecay').value = veri.toneDecay || '';
+                        document.getElementById('sim-sisi').value = veri.sisi || '';
+                        document.getElementById('sim-ablb').value = veri.ablb || '';
+                        document.getElementById('sim-dpoae').value = veri.dpoae || '';
+                        document.getElementById('sim-teoae').value = veri.teoae || '';
+                        document.getElementById('sim-abr').value = veri.abr || '';
+                        document.getElementById('sim-assr').value = veri.assr || '';
+                        document.getElementById('sim-ecochg').value = veri.ecochg || '';
+                        document.getElementById('sim-caep').value = veri.caep || '';
                         document.getElementById('sim-gereksiz').value = veri.gereksizTestler || '';
                         document.getElementById('sim-ipucu').value = veri.ipucu || '';
                     }
@@ -438,13 +466,23 @@
                     timpanometri: document.getElementById('sim-timpano').value,
                     refleks: document.getElementById('sim-refleks').value,
                     konusma: document.getElementById('sim-konusma').value,
+                    yuksekFrekans: document.getElementById('sim-yuksekfrekans').value,
+                    toneDecay: document.getElementById('sim-tonedecay').value,
+                    sisi: document.getElementById('sim-sisi').value,
+                    ablb: document.getElementById('sim-ablb').value,
+                    dpoae: document.getElementById('sim-dpoae').value,
+                    teoae: document.getElementById('sim-teoae').value,
+                    abr: document.getElementById('sim-abr').value,
+                    assr: document.getElementById('sim-assr').value,
+                    ecochg: document.getElementById('sim-ecochg').value,
+                    caep: document.getElementById('sim-caep').value,
                     gereksizTestler: document.getElementById('sim-gereksiz').value,
                     ipucu: document.getElementById('sim-ipucu').value
                 });
             }
 
             try {
-                const res = await fetch(url, { method: method, headers: headers, body: bodyData });
+                const res = await adminFetch(url, { method: method, headers: headers, body: bodyData });
                 const data = await res.json();
 
                 if (data.success) {
@@ -491,18 +529,13 @@
         // --- SİLME ---
         async function sil(id) {
             showConfirm(`Kayıt #${id} silinecek. Emin misin?`, async () => {
-                // Not: Simülasyon silme rotası server.js'de yoksa sadece klasik çalışır.
-                // İdeal olan server.js'e delete-simulation rotasını da eklemektir.
-                const url = (aktifMod === 'klasik') ? `/admin/delete-case/${id}` : `/admin/delete-case/${id}`; // GÜNCELLEME GEREKİR
-
-                // NOT: Simülasyon silme için server.js'de ayrı bir rota yapmadıysak, geçici olarak aynı rotayı deniyor.
-                // Eğer server.js'de '/admin/delete-simulation/:id' yoksa simülasyon silinemez.
+                const url = (aktifMod === 'klasik') ? `/admin/delete-case/${id}` : `/admin/delete-simulation/${id}`;
 
                 try {
-                    const res = await fetch(url, { method: 'DELETE' });
+                    const res = await adminFetch(url, { method: 'DELETE' });
                     const data = await res.json();
                     if (data.success) { showToast("Silindi.", "success"); listele(); }
-                    else showToast("Silinemedi (Veya rota eksik).", "error");
+                    else showToast(data.message || "Silinemedi.", "error");
                 } catch (e) { showToast("Hata.", "error"); }
             });
         }
@@ -511,7 +544,7 @@
         async function feedbacksGetir() {
             const div = document.getElementById('feedback-listesi');
             try {
-                const res = await fetch('/admin/feedbacks');
+                const res = await adminFetch('/admin/feedbacks');
                 const msgs = await res.json();
                 div.innerHTML = "";
                 if (!msgs.length) { div.innerHTML = "<p style='color:#aaa; padding:10px;'>Mesaj yok.</p>"; return; }
@@ -521,8 +554,8 @@
                     div.innerHTML += `
                         <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:15px; border-radius:10px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; opacity:${op};">
                             <div>
-                                <strong style="color:var(--primary);">${m.kullaniciAdi}</strong> <small style="color:#aaa;">${tarih}</small>
-                                <div style="color:white; margin-top:5px;">${m.mesaj}</div>
+                                <strong style="color:var(--primary);">${safeHTML(m.kullaniciAdi)}</strong> <small style="color:#aaa;">${tarih}</small>
+                                <div style="color:white; margin-top:5px;">${safeHTML(m.mesaj)}</div>
                             </div>
                             <div>
                                 <button onclick="durumDegistir('${m._id}')" style="background:transparent; border:none; cursor:pointer; color:var(--secondary); font-size:1.2rem; margin-right:10px;"><i class="fas fa-check-circle"></i></button>
@@ -534,10 +567,10 @@
             } catch (e) { }
         }
 
-        async function durumDegistir(id) { await fetch('/admin/toggle-feedback/' + id, { method: 'PUT' }); feedbacksGetir(); }
+        async function durumDegistir(id) { await adminFetch('/admin/toggle-feedback/' + id, { method: 'PUT' }); feedbacksGetir(); }
         async function feedbackSil(id) {
             showConfirm("Mesaj silinsin mi?", async () => {
-                await fetch('/admin/delete-feedback/' + id, { method: 'DELETE' }); feedbacksGetir();
+                await adminFetch('/admin/delete-feedback/' + id, { method: 'DELETE' }); feedbacksGetir();
             });
         }
 
@@ -556,7 +589,7 @@
             sonuc.innerText = "📧 Gönderiliyor...";
 
             try {
-                const res = await fetch('/admin/send-notification', {
+                const res = await adminFetch('/admin/send-notification', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ subject: konu, message: mesaj })

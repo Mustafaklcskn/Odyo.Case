@@ -11,13 +11,13 @@
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZQQ6H9JW12"></script>
     <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
 
-    gtag('config', 'G-ZQQ6H9JW12');
+        gtag('config', 'G-ZQQ6H9JW12');
     </script>
-    
+
     <style>
         /* ÖĞRENCİ EKRANI TAB STİLLERİ */
         .student-tabs {
@@ -626,10 +626,10 @@
             </div>
 
             <div class="student-tabs">
-                <button class="st-btn active" onclick="tabDegistir('klasik')">
+                <button class="st-btn active" onclick="tabDegistir('klasik', event)">
                     <i class="fas fa-folder-open"></i> Vaka Çalışmaları
                 </button>
-                <button class="st-btn" onclick="tabDegistir('simulasyon')">
+                <button class="st-btn" onclick="tabDegistir('simulasyon', event)">
                     <i class="fas fa-user-md"></i> Simülasyon Merkezi
                 </button>
                 <a href="/odyometri.html" class="st-btn" style="text-decoration:none; color:#94a3b8;">
