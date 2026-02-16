@@ -220,6 +220,15 @@ const SettingSchema = new mongoose.Schema({
 });
 const SettingModel = mongoose.models.Setting || mongoose.model("Setting", SettingSchema);
 
+// BİLDİRİM ŞEMASI
+const NotificationSchema = new mongoose.Schema({
+    username: { type: String, required: true },
+    message: { type: String, required: true },
+    read: { type: Boolean, default: false },
+    createdAt: { type: Date, default: Date.now }
+});
+const NotificationModel = mongoose.models.Notification || mongoose.model("Notification", NotificationSchema);
+
 // --- YARDIMCI FONKSİYONLAR ---
 async function triggerSiteUpdate(mesaj) {
     try {
@@ -228,6 +237,13 @@ async function triggerSiteUpdate(mesaj) {
         const updateMsg = mesaj || "Sistem güncellendi.";
         await SettingModel.findOneAndUpdate({ key: "update_message" }, { value: updateMsg }, { upsert: true });
         console.log("🔔 Site güncellendi:", updateMsg);
+
+        // Tüm kullanıcılara bildirim oluştur
+        try {
+            const users = await UserModel.find({}).select('username');
+            const notifs = users.map(u => ({ username: u.username, message: updateMsg }));
+            if (notifs.length > 0) await NotificationModel.insertMany(notifs);
+        } catch (ne) { console.error('Bildirim oluşturma hatası:', ne); }
     } catch (e) { console.error("Güncelleme hatası", e); }
 }
 
@@ -1122,6 +1138,42 @@ app.post('/admin/send-notification', verifyToken, verifyAdmin, async (req, res) 
     } catch (error) {
         console.error('Bildirim hatası:', error);
         res.status(500).json({ success: false, message: 'Sunucu hatası.' });
+    }
+});
+
+// --- BİLDİRİM SİSTEMİ API ---
+app.get('/my-notifications', verifyToken, async (req, res) => {
+    try {
+        const notifs = await NotificationModel.find({ username: req.user.username })
+            .sort({ createdAt: -1 })
+            .limit(30);
+        res.json(notifs);
+    } catch (e) {
+        res.status(500).json({ success: false, message: 'Bildirimler alınamadı.' });
+    }
+});
+
+app.put('/notifications/read-all', verifyToken, async (req, res) => {
+    try {
+        await NotificationModel.updateMany(
+            { username: req.user.username, read: false },
+            { $set: { read: true } }
+        );
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ success: false });
+    }
+});
+
+app.put('/notifications/read/:id', verifyToken, async (req, res) => {
+    try {
+        await NotificationModel.findOneAndUpdate(
+            { _id: req.params.id, username: req.user.username },
+            { $set: { read: true } }
+        );
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ success: false });
     }
 });
 

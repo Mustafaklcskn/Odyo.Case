@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <title>Klinik Simülasyon | OdyoCase</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -366,7 +367,8 @@
             <span style="color:white; font-weight:bold;">Ana Sayfaya Dön</span>
         </a>
         <div style="font-weight:700; color:#94a3b8; letter-spacing:1px;">KLİNİK SİMÜLASYON</div>
-        <div style="width:35px;"></div>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Tema Değiştir"><i class="fas fa-moon"
+                id="theme-icon"></i></button>
     </nav>
 
     <div class="sim-wrapper">
@@ -727,6 +729,30 @@
                 btn.disabled = false;
             }
         }
+    </script>
+    <script>
+        function toggleTheme() {
+            const html = document.documentElement;
+            const icon = document.getElementById('theme-icon');
+            const current = html.getAttribute('data-theme');
+            if (current === 'light') {
+                html.removeAttribute('data-theme');
+                if (icon) { icon.classList.remove('fa-sun'); icon.classList.add('fa-moon'); }
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.setAttribute('data-theme', 'light');
+                if (icon) { icon.classList.remove('fa-moon'); icon.classList.add('fa-sun'); }
+                localStorage.setItem('theme', 'light');
+            }
+        }
+        (function () {
+            const saved = localStorage.getItem('theme');
+            if (saved === 'light') {
+                document.documentElement.setAttribute('data-theme', 'light');
+                const icon = document.getElementById('theme-icon');
+                if (icon) { icon.classList.remove('fa-moon'); icon.classList.add('fa-sun'); }
+            }
+        })();
     </script>
 </body>
 

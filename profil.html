@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <title>Öğrenci Paneli | OdyoCase</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -250,6 +251,8 @@
         </a>
 
         <div>
+            <button class="theme-toggle" onclick="toggleTheme()" title="Tema Değiştir"><i class="fas fa-moon"
+                    id="theme-icon"></i></button>
             <a href="/" class="nav-profil"><i class="fas fa-home"></i> Ana Sayfaya Dön</a>
         </div>
     </nav>
@@ -630,6 +633,38 @@
         rozetleriYukle();
         haftalikGrafikYukle();
         davetKoduGetir();
+    </script>
+    <script>
+        // Theme Toggle
+        function toggleTheme() {
+            const html = document.documentElement;
+            const icon = document.getElementById('theme-icon');
+            const current = html.getAttribute('data-theme');
+            if (current === 'light') {
+                html.removeAttribute('data-theme');
+                if (icon) { icon.classList.remove('fa-sun'); icon.classList.add('fa-moon'); }
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.setAttribute('data-theme', 'light');
+                if (icon) { icon.classList.remove('fa-moon'); icon.classList.add('fa-sun'); }
+                localStorage.setItem('theme', 'light');
+            }
+        }
+        (function () {
+            const saved = localStorage.getItem('theme');
+            if (saved === 'light') {
+                document.documentElement.setAttribute('data-theme', 'light');
+                const icon = document.getElementById('theme-icon');
+                if (icon) { icon.classList.remove('fa-moon'); icon.classList.add('fa-sun'); }
+            }
+        })();
+        window.addEventListener('scroll', function () {
+            const navbar = document.querySelector('.navbar');
+            if (navbar) {
+                if (window.scrollY > 50) navbar.classList.add('navbar-scrolled');
+                else navbar.classList.remove('navbar-scrolled');
+            }
+        });
     </script>
 </body>
 

@@ -106,6 +106,14 @@ ul {
     position: sticky;
     top: 0;
     z-index: 100;
+    transition: padding 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.navbar-scrolled {
+    padding: 0.5rem 2rem;
+    background: rgba(15, 23, 42, 0.98);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
 }
 
 .navbar h2 {
@@ -287,9 +295,10 @@ td:last-child {
 }
 
 .vaka-karti:hover {
-    transform: translateX(10px);
+    transform: translateX(8px) scale(1.02);
     background: rgba(255, 255, 255, 0.1);
     border-left-color: var(--primary);
+    box-shadow: 0 8px 30px rgba(59, 130, 246, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.1);
 }
 
 .vaka-karti strong {
@@ -497,6 +506,51 @@ body.auth-page {
     display: flex;
     align-items: center;
     justify-content: center;
+    background: linear-gradient(-45deg, #0f172a, #1e3a5f, #0f172a, #1a2744);
+    background-size: 400% 400%;
+    animation: authGradient 12s ease infinite;
+}
+
+@keyframes authGradient {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+body.auth-page::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+        radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(16, 185, 129, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.08) 0%, transparent 40%);
+    z-index: 0;
+    pointer-events: none;
+}
+
+body.auth-page .auth-container {
+    position: relative;
+    z-index: 1;
+}
+
+body.auth-page .auth-container .card {
+    background: rgba(30, 41, 59, 0.6);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .auth-container {
@@ -1671,4 +1725,473 @@ button:disabled,
     margin: 8px 0 0 0;
     font-size: 0.9rem;
     color: #e2e8f0;
+}
+
+/* =========================================
+   18. SPLASH SCREEN
+   ========================================= */
+.splash-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.6s ease, visibility 0.6s ease;
+}
+
+.splash-screen.splash-hide {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.splash-content {
+    text-align: center;
+}
+
+.splash-logo {
+    animation: splashPulse 1.5s ease-in-out infinite;
+    filter: drop-shadow(0 0 30px rgba(59, 130, 246, 0.4));
+}
+
+.splash-title {
+    font-size: 3rem;
+    font-weight: 800;
+    color: white;
+    margin: 20px 0 8px 0;
+    letter-spacing: -1px;
+    animation: splashFadeUp 0.8s ease 0.3s both;
+}
+
+.splash-title span {
+    background: linear-gradient(135deg, #3b82f6, #10b981);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.splash-subtitle {
+    font-size: 1rem;
+    color: #94a3b8;
+    margin: 0;
+    animation: splashFadeUp 0.8s ease 0.6s both;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 300;
+}
+
+@keyframes splashPulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.08);
+    }
+}
+
+@keyframes splashFadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* =========================================
+   19. DARK / LIGHT THEME
+   ========================================= */
+.theme-toggle {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #f59e0b;
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.theme-toggle:hover {
+    background: rgba(245, 158, 11, 0.15);
+    transform: rotate(20deg);
+}
+
+[data-theme="light"] {
+    --bg-color: #f1f5f9;
+    --card-bg: rgba(255, 255, 255, 0.85);
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --secondary: #059669;
+    --accent: #d97706;
+    --danger: #dc2626;
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --border-color: rgba(0, 0, 0, 0.1);
+    --shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] body,
+[data-theme="light"] {
+    background-color: var(--bg-color);
+    background-image:
+        radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.08) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.06) 0px, transparent 50%);
+    color: var(--text-main);
+}
+
+[data-theme="light"] .navbar {
+    background: rgba(255, 255, 255, 0.9);
+    border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .navbar span {
+    color: #1e293b !important;
+}
+
+[data-theme="light"] .navbar-scrolled {
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .card,
+[data-theme="light"] .leaderboard-panel,
+[data-theme="light"] .vaka-karti,
+[data-theme="light"] #detay-ekrani {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .stat-card {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] td {
+    background: rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="light"] input[type="text"],
+[data-theme="light"] input[type="password"],
+[data-theme="light"] input[type="email"],
+[data-theme="light"] input[type="number"],
+[data-theme="light"] select,
+[data-theme="light"] textarea {
+    background: rgba(0, 0, 0, 0.04) !important;
+    border-color: rgba(0, 0, 0, 0.15) !important;
+    color: #1e293b !important;
+}
+
+[data-theme="light"] .theme-toggle {
+    color: #6366f1;
+    background: rgba(99, 102, 241, 0.08);
+    border-color: rgba(99, 102, 241, 0.2);
+}
+
+[data-theme="light"] .confirm-box,
+[data-theme="light"] .news-box,
+[data-theme="light"] .modal-content {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.1);
+    color: #1e293b;
+}
+
+[data-theme="light"] .toast {
+    background: rgba(255, 255, 255, 0.95);
+    color: #1e293b;
+}
+
+[data-theme="light"] .vaka-karti:hover {
+    background: rgba(59, 130, 246, 0.05);
+    box-shadow: 0 8px 30px rgba(59, 130, 246, 0.1), 0 0 0 1px rgba(59, 130, 246, 0.08);
+}
+
+/* =========================================
+   20. CONFETTI ANIMATION
+   ========================================= */
+.confetti-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10000;
+    overflow: hidden;
+}
+
+.confetti-piece {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    top: -20px;
+    animation: confettiFall 3s ease-in forwards;
+}
+
+@keyframes confettiFall {
+    0% {
+        transform: translateY(0) rotateZ(0deg) rotateX(0deg);
+        opacity: 1;
+    }
+
+    75% {
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateY(100vh) rotateZ(720deg) rotateX(360deg);
+        opacity: 0;
+    }
+}
+
+/* =========================================
+   21. ROZET VİTRİN İYİLEŞTİRME
+   ========================================= */
+.badge-item:not(.locked):hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.2);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.badge-item:not(.locked) {
+    position: relative;
+    overflow: hidden;
+}
+
+.badge-item:not(.locked)::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg,
+            transparent 30%,
+            rgba(255, 255, 255, 0.05) 50%,
+            transparent 70%);
+    transform: translateX(-100%);
+    transition: transform 0.6s ease;
+}
+
+.badge-item:not(.locked):hover::after {
+    transform: translateX(100%);
+}
+
+.badge-item:not(.locked) .badge-icon {
+    animation: badgeGlow 2s ease-in-out infinite;
+}
+
+@keyframes badgeGlow {
+
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 transparent;
+    }
+
+    50% {
+        box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+    }
+}
+
+/* =========================================
+   22. NOTIFICATION BELL
+   ========================================= */
+.notif-bell {
+    position: relative;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: var(--text-muted);
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.notif-bell:hover {
+    background: rgba(59, 130, 246, 0.15);
+    color: var(--primary);
+}
+
+.notif-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: var(--danger);
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 800;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: notifPop 0.3s ease;
+}
+
+@keyframes notifPop {
+    from {
+        transform: scale(0);
+    }
+
+    to {
+        transform: scale(1);
+    }
+}
+
+.notif-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: 340px;
+    max-height: 400px;
+    overflow-y: auto;
+    background: rgba(30, 41, 59, 0.98);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    z-index: 200;
+    display: none;
+    padding: 0;
+}
+
+.notif-dropdown.show {
+    display: block;
+    animation: fadeSlideDown 0.2s ease;
+}
+
+.notif-dropdown-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.notif-dropdown-header h4 {
+    margin: 0;
+    color: var(--text-main);
+    font-size: 0.95rem;
+}
+
+.notif-mark-read {
+    background: none;
+    border: none;
+    color: var(--primary);
+    font-size: 0.8rem;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.notif-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    transition: background 0.2s;
+    cursor: pointer;
+}
+
+.notif-item:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.notif-item.unread {
+    background: rgba(59, 130, 246, 0.06);
+    border-left: 3px solid var(--primary);
+}
+
+.notif-item p {
+    margin: 0;
+    color: var(--text-main);
+    font-size: 0.88rem;
+    line-height: 1.4;
+}
+
+.notif-item small {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.notif-empty {
+    padding: 30px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+[data-theme="light"] .notif-dropdown {
+    background: rgba(255, 255, 255, 0.98);
+}
+
+[data-theme="light"] .notif-item.unread {
+    background: rgba(59, 130, 246, 0.04);
+}
+
+/* =========================================
+   23. MOBILE RESPONSIVE IMPROVEMENTS
+   ========================================= */
+@media (max-width: 480px) {
+    .splash-title {
+        font-size: 2rem;
+    }
+
+    .splash-subtitle {
+        font-size: 0.8rem;
+    }
+
+    .notif-dropdown {
+        right: -60px;
+        width: 300px;
+    }
+}
+
+@media (max-width: 768px) {
+    body.auth-page .auth-container {
+        max-width: 100%;
+        padding: 0 15px;
+    }
+
+    body.auth-page .auth-container .card {
+        border-radius: 16px;
+    }
+
+    .badge-gallery {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    .student-tabs {
+        flex-wrap: wrap;
+    }
+
+    .control-bar {
+        flex-wrap: wrap;
+    }
+
+    .theme-toggle,
+    .notif-bell {
+        width: 38px;
+        height: 38px;
+        font-size: 1rem;
+    }
 }

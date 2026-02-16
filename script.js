@@ -428,7 +428,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 gonderButonu.innerHTML = 'Tamamlandı';
                 cozulmusVakalar.push(seciliVakaID);
                 if (sayacInterval) clearInterval(sayacInterval);
-                rozetKontrol(); // Rozet kazanma kontrolü
+                rozetKontrol();
+                // Confetti animasyonu (puan >= 70)
+                if (data.puan >= 70 && typeof launchConfetti === 'function') {
+                    launchConfetti();
+                }
             } else {
                 sonucMesaji.innerHTML = `<span style="color:var(--danger)">${data.message}</span>`;
                 gonderButonu.disabled = false;
@@ -902,4 +906,145 @@ document.addEventListener("DOMContentLoaded", function () {
         } catch (e) { showToast('Bağlantı hatası', 'error'); }
     };
 
+});
+
+// =========================================
+// GLOBAL FONKSİYONLAR (DOMContentLoaded dışında)
+// =========================================
+
+// --- NAVBAR SCROLL EFEKTİ ---
+window.addEventListener('scroll', function () {
+    const navbar = document.querySelector('.navbar');
+    if (navbar) {
+        if (window.scrollY > 50) {
+            navbar.classList.add('navbar-scrolled');
+        } else {
+            navbar.classList.remove('navbar-scrolled');
+        }
+    }
+});
+
+// --- DARK / LIGHT THEME TOGGLE ---
+function toggleTheme() {
+    const html = document.documentElement;
+    const icon = document.getElementById('theme-icon');
+    const current = html.getAttribute('data-theme');
+    if (current === 'light') {
+        html.removeAttribute('data-theme');
+        if (icon) { icon.classList.remove('fa-sun'); icon.classList.add('fa-moon'); }
+        localStorage.setItem('theme', 'dark');
+    } else {
+        html.setAttribute('data-theme', 'light');
+        if (icon) { icon.classList.remove('fa-moon'); icon.classList.add('fa-sun'); }
+        localStorage.setItem('theme', 'light');
+    }
+}
+
+// Tema tercihi yükle
+(function () {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+        const icon = document.getElementById('theme-icon');
+        if (icon) { icon.classList.remove('fa-moon'); icon.classList.add('fa-sun'); }
+    }
+})();
+
+// --- CONFETTİ ANİMASYONU ---
+function launchConfetti() {
+    const container = document.createElement('div');
+    container.className = 'confetti-container';
+    document.body.appendChild(container);
+
+    const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
+    const shapes = ['circle', 'rect'];
+
+    for (let i = 0; i < 50; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        const shape = shapes[Math.floor(Math.random() * shapes.length)];
+        const size = Math.random() * 8 + 6;
+        const left = Math.random() * 100;
+        const delay = Math.random() * 1.5;
+        const duration = Math.random() * 2 + 2;
+
+        piece.style.left = left + '%';
+        piece.style.width = size + 'px';
+        piece.style.height = shape === 'rect' ? (size * 0.6) + 'px' : size + 'px';
+        piece.style.background = color;
+        piece.style.borderRadius = shape === 'circle' ? '50%' : '2px';
+        piece.style.animationDelay = delay + 's';
+        piece.style.animationDuration = duration + 's';
+
+        container.appendChild(piece);
+    }
+
+    setTimeout(() => container.remove(), 5000);
+}
+window.launchConfetti = launchConfetti;
+
+// --- BİLDİRİM PANELİ ---
+function toggleNotifPanel() {
+    const panel = document.getElementById('notif-dropdown');
+    if (panel) panel.classList.toggle('show');
+}
+
+function markAllRead() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    fetch('/notifications/read-all', {
+        method: 'PUT',
+        headers: { 'Authorization': token }
+    }).then(() => {
+        loadNotifications();
+    }).catch(() => { });
+}
+
+async function loadNotifications() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+        const res = await fetch('/my-notifications', { headers: { 'Authorization': token } });
+        if (!res.ok) return;
+        const notifs = await res.json();
+        const list = document.getElementById('notif-list');
+        const badge = document.getElementById('notif-count');
+        if (!list) return;
+
+        const unreadCount = notifs.filter(n => !n.read).length;
+        if (badge) {
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        if (!notifs.length) {
+            list.innerHTML = '<div class="notif-empty"><i class="fas fa-check-circle"></i><br>Bildirim yok</div>';
+            return;
+        }
+
+        list.innerHTML = notifs.slice(0, 20).map(n => {
+            const date = new Date(n.createdAt).toLocaleDateString('tr-TR');
+            return `<div class="notif-item ${n.read ? '' : 'unread'}">
+                <p>${n.message}</p>
+                <small>${date}</small>
+            </div>`;
+        }).join('');
+    } catch (e) { /* ignore */ }
+}
+
+// Başlangıçta bildirimleri yükle
+setTimeout(loadNotifications, 1000);
+
+// Panel dışına tıklayınca kapat
+document.addEventListener('click', function (e) {
+    const dropdown = document.getElementById('notif-dropdown');
+    const bell = document.querySelector('.notif-bell');
+    if (dropdown && dropdown.classList.contains('show') && !dropdown.contains(e.target) && bell && !bell.contains(e.target)) {
+        dropdown.classList.remove('show');
+    }
 });
