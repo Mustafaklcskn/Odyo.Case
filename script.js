@@ -985,9 +985,15 @@ function launchConfetti() {
 window.launchConfetti = launchConfetti;
 
 // --- BİLDİRİM PANELİ ---
-function toggleNotifPanel() {
+function toggleNotifPanel(e) {
+    if (e) e.stopPropagation();
     const panel = document.getElementById('notif-dropdown');
-    if (panel) panel.classList.toggle('show');
+    if (!panel) return;
+
+    // Diğer açık dropdown panellerini kapat
+    document.querySelectorAll('.dropdown-panel.show').forEach(p => p.classList.remove('show'));
+
+    panel.classList.toggle('show');
 }
 
 function markAllRead() {
