@@ -4,34 +4,26 @@
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
             http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
-<!-- created with Free Online Sitemap Generator www.xml-sitemaps.com -->
-
 
 <url>
   <loc>https://www.odyocase.com.tr/</loc>
-  <lastmod>2026-02-15T19:54:52+00:00</lastmod>
+  <lastmod>2026-02-23T01:05:00+00:00</lastmod>
   <priority>1.00</priority>
 </url>
 <url>
-  <loc>https://www.odyocase.com.tr/admin.html</loc>
-  <lastmod>2026-02-15T19:54:52+00:00</lastmod>
+  <loc>https://www.odyocase.com.tr/login.html</loc>
+  <lastmod>2026-02-23T01:05:00+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
-  <loc>https://www.odyocase.com.tr/profil.html</loc>
-  <lastmod>2026-02-15T19:54:52+00:00</lastmod>
+  <loc>https://www.odyocase.com.tr/register.html</loc>
+  <lastmod>2026-02-23T01:05:00+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
   <loc>https://www.odyocase.com.tr/odyometri.html</loc>
-  <lastmod>2026-02-15T19:54:52+00:00</lastmod>
+  <lastmod>2026-02-23T01:05:00+00:00</lastmod>
   <priority>0.80</priority>
 </url>
-<url>
-  <loc>https://www.odyocase.com.tr/index.html</loc>
-  <lastmod>2026-02-15T19:54:52+00:00</lastmod>
-  <priority>0.64</priority>
-</url>
-
 
 </urlset>

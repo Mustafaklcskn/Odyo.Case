@@ -3,8 +3,19 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-    <title>Giriş Yap | OdyoCase</title>
+    <title>Giriş Yap | OdyoCase - Odyoloji Eğitim Platformu</title>
+    <meta name="description"
+        content="OdyoCase'e giriş yap. İnteraktif odyoloji vakaları, klinik simülasyonlar ve odyometri simülasyonu ile öğrenmeye başla.">
+    <link rel="canonical" href="https://www.odyocase.com.tr/login.html">
+    <!-- Open Graph -->
+    <meta property="og:title" content="OdyoCase | Odyoloji Eğitim Platformu">
+    <meta property="og:description"
+        content="İnteraktif odyoloji vakaları, klinik simülasyonlar ve odyometri simülasyonu ile öğrenmeye başla.">
+    <meta property="og:url" content="https://www.odyocase.com.tr/login.html">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="OdyoCase">
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -203,6 +214,12 @@
     </div>
 
     <script>
+        // Zaten giriş yapmışsa ana sayfaya yönlendir
+        (function () {
+            const token = localStorage.getItem('token');
+            if (token) window.location.replace('/');
+        })();
+
         // Şifre Göster/Gizle
         function sifreyiGosterGizle(ikon) {
             const input = document.getElementById('sifre');
@@ -248,7 +265,7 @@
                     localStorage.setItem('isAdmin', data.isAdmin);
                     localStorage.setItem('school', data.school);
 
-                    setTimeout(() => window.location.href = '/', 1000);
+                    setTimeout(() => window.location.replace('/'), 1000);
                 } else {
                     mesaj.style.color = "var(--danger-color)";
                     mesaj.innerText = data.message;
