@@ -818,6 +818,10 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
 
+        // Bildirim panelini de kapat
+        const notifPanel = document.getElementById('notif-dropdown');
+        if (notifPanel) notifPanel.classList.remove('show');
+
         // Bu dropdown'ı toggle et
         dropdown.classList.toggle('show');
     };
@@ -829,6 +833,12 @@ document.addEventListener("DOMContentLoaded", function () {
             document.querySelectorAll('.dropdown-panel.show').forEach(panel => {
                 panel.classList.remove('show');
             });
+            // Bildirim panelini de kapat
+            const notifPanel = document.getElementById('notif-dropdown');
+            if (notifPanel) {
+                notifPanel.classList.remove('show');
+                notifPanel.style.display = 'none';
+            }
         }
     });
 
@@ -990,10 +1000,19 @@ function toggleNotifPanel(e) {
     const panel = document.getElementById('notif-dropdown');
     if (!panel) return;
 
+    const isOpen = panel.classList.contains('show');
+
     // Diğer açık dropdown panellerini kapat
     document.querySelectorAll('.dropdown-panel.show').forEach(p => p.classList.remove('show'));
 
-    panel.classList.toggle('show');
+    // Bildirim panelini toggle et
+    if (isOpen) {
+        panel.classList.remove('show');
+        panel.style.display = 'none';
+    } else {
+        panel.classList.add('show');
+        panel.style.display = 'block';
+    }
 }
 
 function markAllRead() {
@@ -1052,5 +1071,6 @@ document.addEventListener('click', function (e) {
     const bell = document.querySelector('.notif-bell');
     if (dropdown && dropdown.classList.contains('show') && !dropdown.contains(e.target) && bell && !bell.contains(e.target)) {
         dropdown.classList.remove('show');
+        dropdown.style.display = 'none';
     }
 });

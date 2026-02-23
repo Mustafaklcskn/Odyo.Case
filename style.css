@@ -1728,7 +1728,7 @@ button:disabled,
 }
 
 /* =========================================
-   18. SPLASH SCREEN
+   18. SPLASH SCREEN (Enhanced Intro)
    ========================================= */
 .splash-screen {
     position: fixed;
@@ -1736,75 +1736,356 @@ button:disabled,
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+    background: linear-gradient(135deg, #0a0f1e 0%, #0f172a 40%, #1a2744 100%);
     z-index: 99999;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: opacity 0.6s ease, visibility 0.6s ease;
+    overflow: hidden;
 }
 
-.splash-screen.splash-hide {
+/* --- Exit Animation --- */
+.splash-screen.splash-exit {
+    animation: splashExit 1s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+@keyframes splashExit {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    60% {
+        opacity: 0.5;
+        transform: scale(1.05);
+    }
+
+    100% {
+        opacity: 0;
+        transform: scale(1.1);
+        visibility: hidden;
+    }
+}
+
+/* --- Floating Particles --- */
+.splash-particles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+}
+
+.splash-particle {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.4), transparent);
+    animation: splashFloat linear infinite;
     opacity: 0;
-    visibility: hidden;
 }
 
+.splash-particle:nth-child(1) {
+    width: 6px;
+    height: 6px;
+    left: 10%;
+    top: 20%;
+    animation-duration: 6s;
+    animation-delay: 0.2s;
+}
+
+.splash-particle:nth-child(2) {
+    width: 4px;
+    height: 4px;
+    left: 25%;
+    top: 70%;
+    animation-duration: 8s;
+    animation-delay: 0.5s;
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.4), transparent);
+}
+
+.splash-particle:nth-child(3) {
+    width: 8px;
+    height: 8px;
+    left: 70%;
+    top: 15%;
+    animation-duration: 7s;
+    animation-delay: 0.3s;
+}
+
+.splash-particle:nth-child(4) {
+    width: 5px;
+    height: 5px;
+    left: 85%;
+    top: 60%;
+    animation-duration: 9s;
+    animation-delay: 0.8s;
+    background: radial-gradient(circle, rgba(139, 92, 246, 0.3), transparent);
+}
+
+.splash-particle:nth-child(5) {
+    width: 3px;
+    height: 3px;
+    left: 50%;
+    top: 85%;
+    animation-duration: 6s;
+    animation-delay: 0.1s;
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.3), transparent);
+}
+
+.splash-particle:nth-child(6) {
+    width: 7px;
+    height: 7px;
+    left: 15%;
+    top: 50%;
+    animation-duration: 10s;
+    animation-delay: 0.6s;
+}
+
+.splash-particle:nth-child(7) {
+    width: 4px;
+    height: 4px;
+    left: 60%;
+    top: 40%;
+    animation-duration: 7s;
+    animation-delay: 0.4s;
+    background: radial-gradient(circle, rgba(245, 158, 11, 0.3), transparent);
+}
+
+.splash-particle:nth-child(8) {
+    width: 5px;
+    height: 5px;
+    left: 90%;
+    top: 30%;
+    animation-duration: 8s;
+    animation-delay: 0.7s;
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.4), transparent);
+}
+
+@keyframes splashFloat {
+    0% {
+        opacity: 0;
+        transform: translateY(0) scale(0.5);
+    }
+
+    15% {
+        opacity: 0.8;
+    }
+
+    85% {
+        opacity: 0.6;
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(-100px) scale(1.2);
+    }
+}
+
+/* --- Content Container --- */
 .splash-content {
     text-align: center;
+    position: relative;
+    z-index: 2;
+}
+
+/* --- Ripple Rings --- */
+.splash-ripple-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    margin-top: -30px;
+    pointer-events: none;
+}
+
+.splash-ripple {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 2px solid rgba(59, 130, 246, 0.3);
+    opacity: 0;
+    animation: splashRipple 2.5s ease-out 1s forwards;
+}
+
+.splash-ripple-2 {
+    animation-delay: 1.3s;
+    border-color: rgba(16, 185, 129, 0.25);
+}
+
+.splash-ripple-3 {
+    animation-delay: 1.6s;
+    border-color: rgba(139, 92, 246, 0.2);
+}
+
+@keyframes splashRipple {
+    0% {
+        width: 120px;
+        height: 120px;
+        opacity: 0.6;
+    }
+
+    100% {
+        width: 350px;
+        height: 350px;
+        opacity: 0;
+    }
+}
+
+/* --- Logo Wrapper --- */
+.splash-logo-wrapper {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 10px;
 }
 
 .splash-logo {
-    animation: splashPulse 1.5s ease-in-out infinite;
-    filter: drop-shadow(0 0 30px rgba(59, 130, 246, 0.4));
+    filter: drop-shadow(0 0 40px rgba(59, 130, 246, 0.5));
 }
 
+/* --- SVG Circle Stroke-Draw --- */
+.splash-circle {
+    stroke-dasharray: 126;
+    stroke-dashoffset: 126;
+    animation: splashDrawCircle 1.2s cubic-bezier(0.65, 0, 0.35, 1) 0.3s forwards;
+    fill: none;
+}
+
+@keyframes splashDrawCircle {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+/* --- Sound Wave Bars (staggered) --- */
+.splash-wave {
+    opacity: 0;
+    transform-origin: center;
+}
+
+.splash-wave-1 {
+    animation: splashWaveIn 0.5s ease 1.2s forwards;
+}
+
+.splash-wave-2 {
+    animation: splashWaveIn 0.5s ease 1.5s forwards;
+}
+
+.splash-wave-3 {
+    animation: splashWaveIn 0.5s ease 1.8s forwards;
+}
+
+@keyframes splashWaveIn {
+    0% {
+        opacity: 0;
+        stroke-dasharray: 0 20;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 1;
+        stroke-dasharray: 20 0;
+    }
+}
+
+/* --- Title --- */
 .splash-title {
-    font-size: 3rem;
+    font-size: 3.5rem;
     font-weight: 800;
-    color: white;
-    margin: 20px 0 8px 0;
+    margin: 15px 0 8px 0;
     letter-spacing: -1px;
-    animation: splashFadeUp 0.8s ease 0.3s both;
+    overflow: hidden;
 }
 
-.splash-title span {
+.splash-title-odyo {
+    display: inline-block;
+    color: white;
+    opacity: 0;
+    transform: translateY(100%);
+    animation: splashTitleSlide 0.7s cubic-bezier(0.16, 1, 0.3, 1) 2.0s forwards;
+}
+
+.splash-title-case {
+    display: inline-block;
     background: linear-gradient(135deg, #3b82f6, #10b981);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
+    opacity: 0;
+    transform: translateY(100%);
+    animation: splashTitleSlide 0.7s cubic-bezier(0.16, 1, 0.3, 1) 2.3s forwards;
 }
 
+@keyframes splashTitleSlide {
+    0% {
+        opacity: 0;
+        transform: translateY(100%);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* --- Subtitle --- */
 .splash-subtitle {
-    font-size: 1rem;
+    font-size: 0.95rem;
     color: #94a3b8;
     margin: 0;
-    animation: splashFadeUp 0.8s ease 0.6s both;
-    letter-spacing: 2px;
+    letter-spacing: 3px;
     text-transform: uppercase;
     font-weight: 300;
-}
-
-@keyframes splashPulse {
-
-    0%,
-    100% {
-        transform: scale(1);
-    }
-
-    50% {
-        transform: scale(1.08);
-    }
+    opacity: 0;
+    animation: splashFadeUp 0.8s ease 2.8s forwards;
 }
 
 @keyframes splashFadeUp {
     from {
         opacity: 0;
-        transform: translateY(20px);
+        transform: translateY(15px);
     }
 
     to {
         opacity: 1;
         transform: translateY(0);
+    }
+}
+
+/* --- Loading Bar --- */
+.splash-loader {
+    width: 200px;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 3px;
+    margin: 30px auto 0;
+    overflow: hidden;
+    opacity: 0;
+    animation: splashFadeUp 0.5s ease 3.2s forwards;
+}
+
+.splash-loader-bar {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #10b981);
+    border-radius: 3px;
+    animation: splashLoaderFill 1s ease 3.2s forwards;
+}
+
+@keyframes splashLoaderFill {
+    0% {
+        width: 0%;
+    }
+
+    100% {
+        width: 100%;
     }
 }
 
@@ -2415,12 +2696,12 @@ button:disabled,
     border-radius: 14px;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
     z-index: 200;
-    display: none;
+    display: none !important;
     padding: 0;
 }
 
 .notif-dropdown.show {
-    display: block;
+    display: block !important;
     animation: fadeSlideDown 0.2s ease;
 }
 
