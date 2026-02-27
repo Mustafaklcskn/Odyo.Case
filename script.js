@@ -119,6 +119,8 @@ document.addEventListener("DOMContentLoaded", function () {
     let globalKalanSure = 0;
     let bekleyenSure = 0; // Modal için geçici süre
     let favoriVakalar = []; // Favori vakaları tutmak için
+    let isAiCase = false; // AI tarafından oluşturulan vaka mı?
+    let aiCaseGizliTani = ''; // AI vakasının gizli tanısı
 
     // --- YENİ: BAŞLANGIÇ FONKSİYONLARI ---
     hosgeldinIsmiGuncelle();
@@ -290,12 +292,17 @@ document.addEventListener("DOMContentLoaded", function () {
         if (vaka.resimUrl) { detayResim.src = vaka.resimUrl; detayResim.style.display = 'block'; }
         else detayResim.style.display = 'none';
 
-        detayBaslik.innerText = `Vaka ${vaka.vakaNo}: ${vaka.baslik}`;
+        detayBaslik.innerText = isAiCase ? `🤖 AI Vaka: ${vaka.baslik}` : `Vaka ${vaka.vakaNo}: ${vaka.baslik}`;
         detayIcerik.innerText = vaka.icerik;
         detayZorluk.innerText = vaka.zorluk;
         detayZorluk.className = `zorluk-etiketi zorluk-${vaka.zorluk}`;
         detayYas.innerText = vaka.yas;
         detayCinsiyet.innerText = vaka.cinsiyet;
+
+        // AI vakasının gizli tanısını sakla
+        if (isAiCase && vaka.gizliTani) {
+            aiCaseGizliTani = vaka.gizliTani;
+        }
 
         listeEkrani.style.display = 'none';
         detayEkrani.style.display = 'block';
@@ -305,15 +312,18 @@ document.addEventListener("DOMContentLoaded", function () {
         // Odak Modu: Butonları Gizle
         if (btnCikis) btnCikis.style.display = 'none';
         if (btnProfil) btnProfil.style.display = 'none';
+        const helpBtn = document.getElementById('help-btn');
+        if (helpBtn) helpBtn.style.display = 'none';
 
         sayacKutusu.style.display = 'none'; // Modal sonrası açılacak
 
-        if (cozulmusVakalar.includes(vaka.vakaNo)) {
+        if (!isAiCase && cozulmusVakalar.includes(vaka.vakaNo)) {
             gonderButonu.disabled = true; gonderButonu.innerHTML = '<i class="fas fa-check"></i> Tamamlandı';
             gonderButonu.style.background = "#475569"; gonderButonu.style.cursor = "not-allowed";
             raporAlani.disabled = true; raporAlani.placeholder = "Bu vaka tamamlandı.";
         } else {
-            gonderButonu.disabled = false; gonderButonu.innerHTML = '<i class="fas fa-paper-plane"></i> Analiz İçin Gönder';
+            gonderButonu.disabled = false;
+            gonderButonu.innerHTML = isAiCase ? '<i class="fas fa-paper-plane"></i> Pratik Analiz Gönder' : '<i class="fas fa-paper-plane"></i> Analiz İçin Gönder';
             gonderButonu.style.background = "linear-gradient(135deg, var(--primary), var(--primary-hover))"; gonderButonu.style.cursor = "pointer";
             raporAlani.disabled = false; raporAlani.placeholder = "Tanı ve bulgularınızı yazın...";
 
@@ -327,8 +337,15 @@ document.addEventListener("DOMContentLoaded", function () {
         bekleyenSure = saniye;
         const modal = document.getElementById('baslangicModal');
         const sureYazi = document.getElementById('modal-sure-bilgisi');
-        if (sureYazi) {
-            let dakika = Math.floor(saniye / 60); // Saniyeyi dakikaya çevir
+        const aiUyari = document.getElementById('ai-vaka-uyari');
+        const sureRow = document.getElementById('modal-sure-row');
+
+        // AI vaka uyarısını göster/gizle
+        if (aiUyari) aiUyari.style.display = isAiCase ? 'block' : 'none';
+        if (sureRow) sureRow.style.display = isAiCase ? 'none' : 'flex';
+
+        if (sureYazi && !isAiCase) {
+            let dakika = Math.floor(saniye / 60);
             sureYazi.innerText = `${dakika} Dakika`;
         }
 
@@ -336,7 +353,7 @@ document.addEventListener("DOMContentLoaded", function () {
             modal.style.display = 'flex';
             if (detayEkrani) detayEkrani.style.filter = "blur(5px)";
         } else {
-            baslatSayac(saniye);
+            if (!isAiCase) baslatSayac(saniye);
         }
     }
 
@@ -346,7 +363,13 @@ document.addEventListener("DOMContentLoaded", function () {
         btnBaslat.onclick = function () {
             document.getElementById('baslangicModal').style.display = 'none';
             detayEkrani.style.filter = "none";
-            baslatSayac(bekleyenSure);
+            if (!isAiCase) {
+                baslatSayac(bekleyenSure);
+            } else {
+                // AI vakalarında zamanlayıcı yok
+                sayacKutusu.style.display = 'none';
+                globalKalanSure = 9999;
+            }
         };
     }
 
@@ -357,18 +380,32 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 
     // --- SAYAÇ ---
+    let toplamSure = 0; // SVG ring progress için
+
     function baslatSayac(sn) {
         if (sayacInterval) clearInterval(sayacInterval);
+
+        // Pratik modu kontrolü – zamanlayıcıyı gizle
+        const pratikCheckbox = document.getElementById('pratik-modu');
+        if (pratikCheckbox && pratikCheckbox.checked) {
+            sayacKutusu.style.display = 'none';
+            globalKalanSure = 9999; // Süre sınırı yok
+            return;
+        }
+
         sayacKutusu.style.display = 'flex';
         sayacKutusu.className = '';
 
+        toplamSure = sn;
         let kalan = sn;
         globalKalanSure = sn;
         guncelleZaman(kalan);
+        guncelleRing(kalan);
 
         sayacInterval = setInterval(() => {
             kalan--; globalKalanSure = kalan;
             guncelleZaman(kalan);
+            guncelleRing(kalan);
             if (kalan < 60) sayacKutusu.classList.add('timer-warning');
             if (kalan < 30) sayacKutusu.classList.add('timer-danger');
             if (kalan < 0) {
@@ -385,6 +422,14 @@ document.addEventListener("DOMContentLoaded", function () {
         zamanGosterge.innerText = `${m < 10 ? '0' + m : m}:${sc < 10 ? '0' + sc : sc}`;
     }
 
+    function guncelleRing(kalan) {
+        const ring = document.getElementById('timer-progress');
+        if (!ring || toplamSure <= 0) return;
+        const circumference = 2 * Math.PI * 22; // ~138.23
+        const progress = Math.max(0, kalan / toplamSure);
+        ring.style.strokeDashoffset = circumference * (1 - progress);
+    }
+
     // --- LİSTEYE DÖN ---
     window.listeyeDon = function () {
         listeEkrani.style.display = 'block';
@@ -393,9 +438,13 @@ document.addEventListener("DOMContentLoaded", function () {
         // Butonları Geri Getir
         if (btnCikis) btnCikis.style.display = 'inline-flex';
         if (btnProfil) btnProfil.style.display = 'inline-flex';
+        const helpBtn = document.getElementById('help-btn');
+        if (helpBtn) helpBtn.style.display = '';
 
         if (sayacInterval) clearInterval(sayacInterval);
         verileriHazirla();
+        isAiCase = false; // AI vaka durumunu sıfırla
+        aiCaseGizliTani = ''; // Gizli tanıyı sıfırla
     };
 
     // --- RAPOR GÖNDERME ---
@@ -406,6 +455,42 @@ document.addEventListener("DOMContentLoaded", function () {
         sonucMesaji.innerHTML = "<span style='color:var(--primary)'>Analiz ediliyor...</span>";
         gonderButonu.disabled = true;
 
+        // AI vakası ise puan kaydetme, sadece AI yorumu al
+        if (isAiCase) {
+            try {
+                const res = await fetch('/ai-evaluate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': token },
+                    body: JSON.stringify({ rapor, gizliTani: aiCaseGizliTani })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    sonucMesaji.innerHTML = `
+                        <div style="text-align:center; padding:10px; margin-bottom:10px; background:rgba(245,158,11,0.1); border-radius:8px; border:1px solid rgba(245,158,11,0.3);">
+                            <i class="fas fa-robot" style="color:#f59e0b;"></i>
+                            <span style="color:#f59e0b; font-weight:600;">AI Pratik Vaka – Puan Kaydedilmedi</span>
+                        </div>
+                        <div style="text-align:center; font-size:1.8rem; color:var(--text-muted); font-weight:800;">TAHMİNİ PUAN: ${data.puan}</div>
+                        <div style="background:rgba(59,130,246,0.1); padding:15px; margin-top:15px; border-radius:10px; border-left:4px solid var(--primary);">
+                            <strong style="color:var(--primary); display:block; margin-bottom:5px;">AI YORUMU:</strong>
+                            <span style="color:#e2e8f0;">${data.yorum}</span>
+                        </div>
+                        <div style="background:rgba(16,185,129,0.1); padding:15px; margin-top:15px; border-radius:10px; border-left:4px solid var(--secondary);">
+                            <strong style="color:var(--secondary); display:block; margin-bottom:5px;">İDEAL CEVAP:</strong>
+                            <span style="color:#e2e8f0;">${data.idealCevap || "-"}</span>
+                        </div>
+                    `;
+                    gonderButonu.innerHTML = '<i class="fas fa-check"></i> Pratik Tamamlandı';
+                    raporAlani.disabled = true;
+                } else {
+                    sonucMesaji.innerHTML = `<span style="color:var(--danger)">${data.message || 'Hata oluştu'}</span>`;
+                    gonderButonu.disabled = false;
+                }
+            } catch (e) { showToast("Bağlantı hatası", "error"); gonderButonu.disabled = false; }
+            return;
+        }
+
+        // Normal vaka rapor gönderme
         try {
             const res = await fetch('/submit-report', {
                 method: 'POST',
@@ -899,21 +984,55 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         }
     };
-    // --- RASTGELE VAKA ---
+    // --- RASTGELE VAKA (AI) ---
     window.rastgeleVaka = async function () {
+        const overlay = document.getElementById('ai-loading-overlay');
+        const tipEl = document.getElementById('ai-loading-tip');
+        const tips = [
+            'Her vaka AI tarafından sıfırdan oluşturulur...',
+            'Gerçekçi hasta hikayeleri hazırlanıyor...',
+            'Odyometri bulguları oluşturuluyor...',
+            'Tanı ve tedavi planı belirleniyor...',
+            'Pratik yapmak öğrenmenin en iyi yoludur!',
+            'AI vakaları sınırsızdır, istediğiniz kadar çözün!'
+        ];
+        let tipIndex = 0;
+        let tipInterval;
+
         try {
-            showToast('Rastgele vaka seçiliyor...', 'info');
+            // Loading ekranını göster
+            if (overlay) {
+                overlay.style.display = 'flex';
+                tipInterval = setInterval(() => {
+                    tipIndex = (tipIndex + 1) % tips.length;
+                    if (tipEl) tipEl.textContent = tips[tipIndex];
+                }, 3000);
+            }
+
+            isAiCase = true;
+            aiCaseGizliTani = '';
             const res = await fetch('/random-case', {
                 headers: { 'Authorization': token }
             });
             const data = await res.json();
+
+            // Loading ekranını gizle
+            if (overlay) overlay.style.display = 'none';
+            if (tipInterval) clearInterval(tipInterval);
+
             if (data.success && data.vaka) {
                 vakaSec(data.vaka);
-                showToast(`Vaka #${data.vaka.vakaNo} seçildi! 🎲`, 'success');
+                showToast(`AI Vaka oluşturuldu! 🤖🎲`, 'success');
             } else {
-                showToast(data.message || 'Vaka bulunamadı', 'warning');
+                isAiCase = false;
+                showToast(data.message || 'AI vaka oluşturulamadı', 'warning');
             }
-        } catch (e) { showToast('Bağlantı hatası', 'error'); }
+        } catch (e) {
+            if (overlay) overlay.style.display = 'none';
+            if (tipInterval) clearInterval(tipInterval);
+            isAiCase = false;
+            showToast('Bağlantı hatası', 'error');
+        }
     };
 
 });

@@ -402,6 +402,122 @@
             transform: scale(1.1);
         }
 
+        /* AI LOADING OVERLAY */
+        #ai-loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 15, 30, 0.92);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            z-index: 10002;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .ai-loading-content {
+            text-align: center;
+            position: relative;
+        }
+
+        .ai-loading-ring {
+            width: 120px;
+            height: 120px;
+            border: 3px solid rgba(59, 130, 246, 0.1);
+            border-top: 3px solid var(--primary);
+            border-right: 3px solid rgba(168, 85, 247, 0.6);
+            border-radius: 50%;
+            margin: 0 auto 30px;
+            animation: aiSpin 1.5s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.15);
+        }
+
+        .ai-loading-icon {
+            position: absolute;
+            top: 35px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2.8rem;
+            color: var(--primary);
+            animation: aiPulse 2s ease-in-out infinite;
+        }
+
+        .ai-loading-title {
+            color: white;
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin: 0 0 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .ai-loading-subtitle {
+            color: #94a3b8;
+            font-size: 0.95rem;
+            margin: 0 0 25px;
+        }
+
+        .loading-dots::after {
+            content: '';
+            animation: loadDots 1.5s steps(4, end) infinite;
+        }
+
+        .ai-loading-tips {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 12px 20px;
+            border-radius: 10px;
+            color: #cbd5e1;
+            font-size: 0.85rem;
+            max-width: 350px;
+            margin: 0 auto;
+        }
+
+        @keyframes aiSpin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes aiPulse {
+
+            0%,
+            100% {
+                opacity: 0.6;
+                transform: translateX(-50%) scale(1);
+            }
+
+            50% {
+                opacity: 1;
+                transform: translateX(-50%) scale(1.1);
+            }
+        }
+
+        @keyframes loadDots {
+            0% {
+                content: '';
+            }
+
+            25% {
+                content: '.';
+            }
+
+            50% {
+                content: '..';
+            }
+
+            75% {
+                content: '...';
+            }
+        }
+
         /* TARTIŞMA BÖLÜMÜ */
         .discussion-section {
             background: rgba(255, 255, 255, 0.03);
@@ -768,7 +884,16 @@
                     <h2 id="detay-baslik" style="margin:0; font-size:1.8rem; color:var(--primary);">...</h2>
                     <span id="detay-zorluk" class="zorluk-etiketi">--</span>
                 </div>
-                <div id="sayac-kutusu">⏳ <span id="zaman">00:00</span></div>
+                <div id="sayac-kutusu">
+                    <svg class="timer-ring" width="52" height="52" viewBox="0 0 52 52">
+                        <circle class="timer-ring-bg" cx="26" cy="26" r="22" />
+                        <circle class="timer-ring-progress" id="timer-progress" cx="26" cy="26" r="22" />
+                    </svg>
+                    <div class="timer-text">
+                        <span id="zaman">00:00</span>
+                        <span class="timer-label">KALAN SÜRE</span>
+                    </div>
+                </div>
             </div>
             <div style="text-align: center;"><img id="detay-resim" src=""
                     style="width: 100%; max-height: 400px; object-fit: contain; margin-bottom: 25px; border-radius:12px; display: none;">
@@ -832,7 +957,30 @@
             <div
                 style="background:rgba(255,255,255,0.05); padding:20px; border-radius:12px; margin-bottom:25px; color:#e2e8f0; font-size:0.95rem; border:1px solid rgba(255,255,255,0.1);">
 
-                <div style="display:flex; align-items:center; gap:15px; margin-bottom:15px;">
+                <!-- AI VAKA UYARISI (varsayılan gizli) -->
+                <div id="ai-vaka-uyari" style="display:none; margin-bottom:20px;">
+                    <div
+                        style="background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3); border-radius:10px; padding:15px; margin-bottom:15px;">
+                        <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+                            <i class="fas fa-robot" style="font-size:1.5rem; color:#f59e0b;"></i>
+                            <strong style="color:#f59e0b; font-size:1.05rem;">AI Tarafından Oluşturulmuş Vaka</strong>
+                        </div>
+                        <ul style="margin:0; padding-left:20px; color:#cbd5e1; line-height:2;">
+                            <li><i class="fas fa-times-circle" style="color:#ef4444; margin-right:5px;"></i> Bu vakadan
+                                <strong style="color:#ef4444;">puan kazanılmaz</strong>
+                            </li>
+                            <li><i class="fas fa-clock" style="color:#94a3b8; margin-right:5px;"></i> Zamanlayıcı
+                                <strong>çalışmaz</strong>, süre sınırı yoktur
+                            </li>
+                            <li><i class="fas fa-brain" style="color:#a855f7; margin-right:5px;"></i> AI tarafından
+                                anlık oluşturulmuş <strong>pratik</strong> bir vakadır</li>
+                            <li><i class="fas fa-check-circle" style="color:#10b981; margin-right:5px;"></i>
+                                Gönderdiğinizde AI yorumu ve ideal cevap alırsınız</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="modal-sure-row" style="display:flex; align-items:center; gap:15px; margin-bottom:15px;">
                     <div
                         style="background:rgba(245,158,11,0.1); width:35px; height:35px; border-radius:8px; display:flex; align-items:center; justify-content:center;">
                         <i class="fas fa-stopwatch" style="color:var(--accent);"></i>
@@ -871,8 +1019,25 @@
         </div>
     </div>
 
+    <!-- AI VAKA LOADING OVERLAY -->
+    <div id="ai-loading-overlay" style="display:none;">
+        <div class="ai-loading-content">
+            <div class="ai-loading-ring"></div>
+            <div class="ai-loading-icon">
+                <i class="fas fa-brain"></i>
+            </div>
+            <h3 class="ai-loading-title">AI Vaka Oluşturuluyor</h3>
+            <p class="ai-loading-subtitle">Yapay zeka sizin için benzersiz bir odyoloji vakası hazırlıyor<span
+                    class="loading-dots"></span></p>
+            <div class="ai-loading-tips">
+                <i class="fas fa-lightbulb" style="color:#f59e0b; margin-right:8px;"></i>
+                <span id="ai-loading-tip">Her vaka AI tarafından sıfırdan oluşturulur...</span>
+            </div>
+        </div>
+    </div>
+
     <!-- YARDIM BUTONU -->
-    <button class="help-btn" onclick="yardimModalAc()" title="Nasıl Kullanılır?">
+    <button class="help-btn" id="help-btn" onclick="yardimModalAc()" title="Nasıl Kullanılır?">
         <i class="fas fa-question"></i>
     </button>
 

@@ -1009,23 +1009,70 @@ app.post('/apply-referral', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false }); }
 });
 
-// --- RASTGELE VAKA ---
+// --- RASTGELE AI VAKA ---
 app.get('/random-case', verifyToken, async (req, res) => {
     try {
-        const raporlar = await RaporModel.find({ kullaniciAdi: req.user.username });
-        const cozulmusIDler = raporlar.map(r => r.vakaID);
+        const prompt = `Sen bir odyoloji eğitmenisin. Rastgele bir odyoloji vaka senaryosu oluştur. 
+Vaka gerçekçi olmalı ve odyoloji öğrencileri için eğitici olmalı.
 
-        // Çözülmemiş vakaları bul
-        const cozulmemisVakalar = await VakaModel.find({ vakaNo: { $nin: cozulmusIDler } }).select('-gizliTani');
+JSON formatında yanıt ver:
+{
+  "baslik": "Kısa ve açıklayıcı başlık",
+  "icerik": "Detaylı hasta hikayesi ve bulgular (en az 3-4 paragraf). Şikayet, aile öyküsü, muayene bulguları, odyometri sonuçları dahil.",
+  "yas": "Hasta yaşı (sayı)",
+  "cinsiyet": "Kadın veya Erkek",
+  "zorluk": "Kolay, Orta veya Zor (rastgele seç)",
+  "gizliTani": "Doğru tanı ve tedavi yaklaşımı"
+}`;
 
-        if (cozulmemisVakalar.length === 0) {
-            return res.json({ success: false, message: "Tebrikler! Tüm vakaları çözdünüz! 🎉" });
-        }
+        const result = await model.generateContent(prompt);
+        const text = result.response.text();
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error('AI yanıtı parse edilemedi');
 
-        // Rastgele bir tane seç
-        const rastgele = cozulmemisVakalar[Math.floor(Math.random() * cozulmemisVakalar.length)];
-        res.json({ success: true, vaka: rastgele });
-    } catch (error) { res.status(500).json({ success: false, message: "Hata" }); }
+        const aiVaka = JSON.parse(jsonMatch[0]);
+
+        res.json({
+            success: true,
+            aiGenerated: true,
+            vaka: {
+                vakaNo: 'AI-' + Date.now(),
+                baslik: aiVaka.baslik,
+                icerik: aiVaka.icerik,
+                yas: aiVaka.yas,
+                cinsiyet: aiVaka.cinsiyet,
+                zorluk: aiVaka.zorluk,
+                gizliTani: aiVaka.gizliTani
+            }
+        });
+    } catch (error) {
+        console.error('AI Vaka hatası:', error);
+        res.status(500).json({ success: false, message: "AI vaka oluşturulamadı." });
+    }
+});
+// --- AI VAKA DEĞERLENDİRME (PUAN KAYDETMEZ) ---
+app.post('/ai-evaluate', verifyToken, async (req, res) => {
+    try {
+        const { rapor, gizliTani } = req.body;
+        if (!rapor || !gizliTani) return res.json({ success: false, message: "Eksik veri." });
+
+        const prompt = `Sen bir odyoloji eğitmenisin. Öğrencinin raporunu değerlendir.
+DOĞRU TANI: ${gizliTani}
+ÖĞRENCİ RAPORU: "${rapor}"
+Puanla (0-100) ve yapıcı yorumla. JSON formatında yanıt ver: { "puan": 0, "yorum": "", "idealCevap": "" }`;
+
+        const result = await model.generateContent(prompt);
+        const text = result.response.text();
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error('AI yanıtı parse edilemedi');
+
+        const aiResult = JSON.parse(jsonMatch[0]);
+        // NOT: Veritabanına kaydetmiyoruz - pratik modu
+        res.json({ success: true, puan: aiResult.puan, yorum: aiResult.yorum, idealCevap: aiResult.idealCevap });
+    } catch (error) {
+        console.error('AI Değerlendirme hatası:', error);
+        res.status(500).json({ success: false, message: "Değerlendirme yapılamadı." });
+    }
 });
 
 // --- GELİŞMİŞ VAKA ARAMA & FİLTRELEME ---
