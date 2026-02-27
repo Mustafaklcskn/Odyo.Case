@@ -82,6 +82,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (!token) { window.location.href = '/login.html'; return; }
 
+    // Reveal page content after auth confirmed
+    document.body.classList.add('auth-ready');
+
     if (isAdmin === "true") {
         const adminBtn = document.getElementById('admin-btn');
         if (adminBtn) adminBtn.style.display = "inline-flex";

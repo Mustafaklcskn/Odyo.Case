@@ -358,6 +358,24 @@
             font-weight: 600;
         }
     </style>
+    <script>
+        // Blocking auth check - runs before body renders to prevent flash
+        if (!localStorage.getItem('token')) {
+            window.location.replace('/login.html');
+            document.documentElement.style.display = 'none';
+        }
+    </script>
+    <style>
+        /* Hide body until auth is confirmed */
+        body {
+            opacity: 0;
+            transition: opacity 0.15s ease;
+        }
+
+        body.auth-ready {
+            opacity: 1;
+        }
+    </style>
 </head>
 
 <body>
@@ -546,6 +564,9 @@
         document.addEventListener("DOMContentLoaded", async () => {
             const token = localStorage.getItem('token');
             if (!token) window.location.href = '/login.html';
+
+            // Reveal page content after auth confirmed
+            document.body.classList.add('auth-ready');
 
             if (!vakaNo) { alert("Vaka seçilmedi!"); window.location.href = '/'; return; }
 

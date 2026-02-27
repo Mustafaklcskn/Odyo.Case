@@ -621,6 +621,24 @@
             font-size: 0.85rem;
         }
     </style>
+    <script>
+        // Blocking auth check - runs before body renders to prevent flash
+        if (!localStorage.getItem('token')) {
+            window.location.replace('/login.html');
+            document.documentElement.style.display = 'none';
+        }
+    </script>
+    <style>
+        /* Hide body until auth is confirmed */
+        body {
+            opacity: 0;
+            transition: opacity 0.15s ease;
+        }
+
+        body.auth-ready {
+            opacity: 1;
+        }
+    </style>
 </head>
 
 <body>

@@ -230,6 +230,24 @@
             background: #1ebe5d;
         }
     </style>
+    <script>
+        // Blocking auth check - runs before body renders to prevent flash
+        if (!localStorage.getItem('token')) {
+            window.location.replace('/login.html');
+            document.documentElement.style.display = 'none';
+        }
+    </script>
+    <style>
+        /* Hide body until auth is confirmed */
+        body {
+            opacity: 0;
+            transition: opacity 0.15s ease;
+        }
+
+        body.auth-ready {
+            opacity: 1;
+        }
+    </style>
 </head>
 
 <body>
@@ -413,6 +431,9 @@
             const okul = localStorage.getItem('school');
 
             if (!token) { window.location.href = '/login.html'; return; }
+
+            // Reveal page content after auth confirmed
+            document.body.classList.add('auth-ready');
 
             document.getElementById('kullanici-adi').innerText = username;
             if (okul && okul !== "undefined") document.getElementById('okul-bilgisi').innerText = okul + " | Odyoloji";
