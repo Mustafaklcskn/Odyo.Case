@@ -328,7 +328,7 @@ document.addEventListener("DOMContentLoaded", function () {
             gonderButonu.disabled = false;
             gonderButonu.innerHTML = isAiCase ? '<i class="fas fa-paper-plane"></i> Pratik Analiz Gönder' : '<i class="fas fa-paper-plane"></i> Analiz İçin Gönder';
             gonderButonu.style.background = "linear-gradient(135deg, var(--primary), var(--primary-hover))"; gonderButonu.style.cursor = "pointer";
-            raporAlani.disabled = false; raporAlani.placeholder = "Tanı ve bulgularınızı yazın...";
+            raporAlani.disabled = false; raporAlani.placeholder = "Örnek: Yapılan saf ses odyometride ... bulguları tespit edilmiştir. Timpanometride ... sonuçları elde edilmiştir. Bu bulgulara dayanarak hastada ... varlığı tanılanmıştır.";
 
             // Başlangıç Modalı Aç
             let sure = 300; if (vaka.zorluk == 'Kolay') sure = 180; if (vaka.zorluk == 'Zor') sure = 600;

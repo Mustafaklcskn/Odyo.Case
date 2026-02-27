@@ -492,26 +492,34 @@ app.post('/evaluate-simulation', verifyToken, async (req, res) => {
         });
 
         // Prompt Hazırlama (Garanti JSON isteme)
-        const prompt = `
-            Sen kıdemli bir Odyoloji Hocasısın.
-            HASTA GERÇEK DURUMU: ${sim.gercekTani}
-            YASAK TESTLER: ${sim.gereksizTestler}
-            
-            ÖĞRENCİNİN YAPTIĞI İŞLEMLER: ${Array.isArray(islemGecmisi) ? islemGecmisi.join(' -> ') : 'İşlem yok'}
-            ÖĞRENCİNİN KOYDUĞU TANI: "${tani}"
+        const prompt = `Sen kıdemli bir Odyoloji Hocasısın. Bir öğrencinin klinik simülasyondaki performansını değerlendiriyorsun.
 
-            Görevin: Öğrenciyi puanla (0-100) ve yorumla.
-            - Sıralama hatası, eksik test veya gereksiz test varsa puan kır(vestibüler testleri değerlendirme dışında tut).
-            - Yanlış tanı varsa puanı ciddi kır.
-            
-            ÖNEMLİ: Cevabı SADECE ve SADECE aşağıdaki JSON formatında ver. Başka hiçbir yazı, açıklama veya markdown ('\`\`\`json') kullanma.
-            
-            {
-                "puan": 0,
-                "yorum": "Buraya hoca yorumunu yaz...",
-                "dogruYol": "Doğru test sırası ve tanı şuydu..."
-            }
-        `;
+HASTA GERÇEK DURUMU: ${sim.gercekTani}
+YASAK/GEREKSİZ TESTLER: ${sim.gereksizTestler}
+
+ÖĞRENCİNİN YAPTIĞI İŞLEMLER (SIRASIYLA): ${Array.isArray(islemGecmisi) ? islemGecmisi.join(' -> ') : 'İşlem yok'}
+ÖĞRENCİNİN KOYDUĞU TANI: "${tani}"
+
+DEĞERLENDİRME KRİTERLERİ:
+1. Öğrenci sadece hastalık adı yazarsa (detaylı klinik açıklama yoksa) MAX 25 PUAN ver.
+2. İyi bir tanı raporu şu formatta olmalıdır:
+   - Yapılan testlerin bulgularını referans vermeli (örn: "Yapılan saf ses odyometride ... bulguları görülmüştür")
+   - Her testin sonucunu klinik olarak yorumlamalı
+   - Bulgulara dayanarak tanıya nasıl ulaştığını açıklamalı
+   - Son olarak kesin tanıyı belirtmeli
+3. Sıralama hatası, eksik test veya gereksiz test varsa puan kır (vestibüler testleri değerlendirme dışında tut).
+4. Yanlış tanı varsa puanı ciddi kır.
+5. Doğru tanı + detaylı bulgu açıklaması = 80-100 puan
+6. Doğru tanı + kısmen detaylı = 50-79 puan
+7. Doğru tanı + sadece tanı adı = 10-25 puan
+8. Yanlış tanı = 0-15 puan
+
+ÖNEMLİ: Cevabı SADECE ve SADECE aşağıdaki JSON formatında ver. Başka hiçbir yazı, açıklama veya markdown kullanma.
+{
+    "puan": 0,
+    "yorum": "Buraya hoca yorumunu yaz...",
+    "dogruYol": "Doğru test sırası ve tanı şuydu..."
+}`;
 
         // AI İsteği
         const result = await model.generateContent(prompt);
@@ -582,7 +590,31 @@ app.post('/submit-report', verifyToken, async (req, res) => {
         const vaka = await VakaModel.findOne({ vakaNo: vakaID });
         if (!vaka) return res.status(404).json({ success: false });
 
-        const prompt = `VAKA: ${vaka.baslik}, TANI: ${vaka.gizliTani}, RAPOR: "${rapor}". Puanla (0-100) ve yorumla. JSON: { "puan": 0, "yorum": "", "idealCevap": "" }`;
+        const prompt = `Sen kıdemli bir Odyoloji Hocasısın. Bir öğrencinin vakaya verdiği klinik raporu değerlendiriyorsun.
+
+VAKA BİLGİLERİ:
+- Başlık: ${vaka.baslik}
+- İçerik: ${vaka.icerik}
+- Doğru Tanı: ${vaka.gizliTani}
+
+ÖĞRENCİNİN RAPORU: "${rapor}"
+
+DEĞERLENDİRME KRİTERLERİ (ÇOK ÖNEMLİ):
+1. Öğrenci sadece hastalık adı veya kısa bir tanı yazarsa (örneğin sadece "otoskleroz" veya "iletim tipi kayıp") MAX 20 PUAN ver. Bu kabul edilemez.
+2. İyi bir rapor şu formatta olmalıdır:
+   - Hangi testlerin yapıldığını ve bulgularını belirtmeli (örn: "Yapılan saf ses odyometride ... bulguları tespit edilmiştir")
+   - Her testin sonucunu klinik olarak yorumlamalı
+   - Bulgulara dayanarak tanıya ulaşma sürecini açıklamalı
+   - Son olarak kesin tanıyı belirtmeli (örn: "Hastada ... varlığı tanılanmıştır")
+3. Rapor ne kadar detaylı ve klinik dil ile yazılmışsa o kadar yüksek puan ver.
+4. Test bulgusu referans etmeden direkt tanı yazan öğrenciye KESİNLİKLE yüksek puan verme.
+5. Doğru tanı + detaylı klinik rapor = 80-100 puan
+6. Doğru tanı + kısmen detaylı rapor = 50-79 puan  
+7. Doğru tanı + sadece tanı adı (detaysız) = 10-25 puan
+8. Yanlış tanı = 0-15 puan
+
+ÖNEMLİ: Cevabı SADECE aşağıdaki JSON formatında ver. Başka hiçbir yazı ekleme.
+{ "puan": 0, "yorum": "Yapıcı değerlendirme yorumun...", "idealCevap": "İdeal klinik rapor örneği..." }`;
         const result = await model.generateContent(prompt);
         let aiResult = JSON.parse(result.response.text().match(/\{[\s\S]*\}/)[0]);
 
@@ -1056,10 +1088,26 @@ app.post('/ai-evaluate', verifyToken, async (req, res) => {
         const { rapor, gizliTani } = req.body;
         if (!rapor || !gizliTani) return res.json({ success: false, message: "Eksik veri." });
 
-        const prompt = `Sen bir odyoloji eğitmenisin. Öğrencinin raporunu değerlendir.
+        const prompt = `Sen kıdemli bir Odyoloji Hocasısın. Bir öğrencinin AI tarafından oluşturulan pratik vakasına verdiği klinik raporu değerlendiriyorsun.
+
 DOĞRU TANI: ${gizliTani}
 ÖĞRENCİ RAPORU: "${rapor}"
-Puanla (0-100) ve yapıcı yorumla. JSON formatında yanıt ver: { "puan": 0, "yorum": "", "idealCevap": "" }`;
+
+DEĞERLENDİRME KRİTERLERİ (ÇOK ÖNEMLİ):
+1. Öğrenci sadece hastalık adı yazarsa (detaylı klinik açıklama yoksa) MAX 20 PUAN ver.
+2. İyi bir rapor şu formatta olmalıdır:
+   - Vakadaki test bulgularını referans göstermeli (örn: "Yapılan ... testine göre ... bulguları tespit edilmiştir")
+   - Bulguları klinik olarak yorumlamalı
+   - Bulgulara dayanarak tanıya ulaşım sürecini açıklamalı
+   - Kesin tanıyı belirtmeli (örn: "Hastada ... varlığı tanılanmıştır")
+3. Rapor ne kadar detaylı ve klinik dil ile yazılmışsa o kadar yüksek puan ver.
+4. Doğru tanı + detaylı klinik rapor = 80-100 puan
+5. Doğru tanı + kısmen detaylı rapor = 50-79 puan
+6. Doğru tanı + sadece tanı adı = 10-25 puan
+7. Yanlış tanı = 0-15 puan
+
+ÖNEMLİ: Cevabı SADECE aşağıdaki JSON formatında ver.
+{ "puan": 0, "yorum": "Yapıcı değerlendirme...", "idealCevap": "İdeal klinik rapor örneği..." }`;
 
         const result = await model.generateContent(prompt);
         const text = result.response.text();
